@@ -1,0 +1,2 @@
+This folder contains files for the application "PyCalculator". The executable file to run the application is available in this folder and its name is "PyCalculator-1-py3.7.egg".
+Collaborator(s): Dominic Tjiptono
