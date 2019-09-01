@@ -5,8 +5,8 @@ import decimal
 from decimal import *
 from decimal import Decimal
 
-getcontext().Emin = -10 * 10000
-getcontext().Emax = 10 * 10000
+getcontext().Emin = -10 ** 10000
+getcontext().Emax = 10 ** 10000
 getcontext().traps[Overflow] = 0
 getcontext().traps[Underflow] = 0
 getcontext().traps[DivisionByZero] = 0
