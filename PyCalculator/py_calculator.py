@@ -36,10 +36,14 @@ class NumNode(Node):
 
     def evaluate(self, operation_node, num_node):
         # type: (OperationNode, NumNode) -> Decimal
-        return Decimal(self.value) * Decimal(num_node.value) if operation_node.value == "*" else Decimal(self.value) - Decimal(num_node.value) \
-            if operation_node.value == "-" else Decimal(self.value) + Decimal(num_node.value) if operation_node.value == "+" else \
-            Decimal(self.value) / Decimal(num_node.value) if operation_node.value == "/" else Decimal(self.value) % Decimal(num_node.value) if \
-                operation_node.value == "%" else Decimal(self.value) // Decimal(num_node.value) if operation_node.value == "//" else \
+        return Decimal(self.value) * Decimal(num_node.value) if operation_node.value == "*" else Decimal(
+            self.value) - Decimal(num_node.value) \
+            if operation_node.value == "-" else Decimal(self.value) + Decimal(
+            num_node.value) if operation_node.value == "+" else \
+            Decimal(self.value) / Decimal(num_node.value) if operation_node.value == "/" else Decimal(
+                self.value) % Decimal(num_node.value) if \
+                operation_node.value == "%" else Decimal(self.value) // Decimal(
+                num_node.value) if operation_node.value == "//" else \
                 Decimal(self.value) ** Decimal(num_node.value)
 
 
@@ -105,13 +109,13 @@ def main():
             for char in expression:
                 if char not in allowed_chars:
                     can_proceed = False
-                    
+
             while not can_proceed:
-            	expression: str = input("Sorry, invalid expression! Please enter another expression: ")
-            	can_proceed = True  # initial value
-            	for char in expression:
-            		if char not in allowed_chars:
-            			can_proceed = False
+                expression: str = input("Sorry, invalid expression! Please enter another expression: ")
+                can_proceed = True  # initial value
+                for char in expression:
+                    if char not in allowed_chars:
+                        can_proceed = False
 
             result: Decimal = evaluate_expression(expression)
             print(str(expression) + " = " + str(result))
