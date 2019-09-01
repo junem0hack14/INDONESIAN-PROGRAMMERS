@@ -1,0 +1,2 @@
+This folder contains files for the application "JvCalculator". The executable file to run the application is available in this folder and its name is "JvCalculator.jar".
+Collaborator(s): Dominic Tjiptono
