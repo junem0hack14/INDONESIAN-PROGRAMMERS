@@ -101,9 +101,17 @@ def main():
                 allowed_chars.append(char)
 
             expression: str = input("Please enter an expression: ")
+            can_proceed: bool = True  # initial value
             for char in expression:
                 if char not in allowed_chars:
-                    expression: str = input("Sorry, invalid expression! Please enter another expression: ")
+                    can_proceed = False
+                    
+            while not can_proceed:
+            	expression: str = input("Sorry, invalid expression! Please enter another expression: ")
+            	can_proceed = True  # initial value
+            	for char in expression:
+            		if char not in allowed_chars:
+            			can_proceed = False
 
             result: Decimal = evaluate_expression(expression)
             print(str(expression) + " = " + str(result))
