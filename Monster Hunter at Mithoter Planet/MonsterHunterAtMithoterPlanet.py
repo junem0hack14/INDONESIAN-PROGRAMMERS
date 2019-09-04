@@ -77,6 +77,9 @@ class Battle:
         # type: (Player) -> None
         self.player: Player = player
 
+    def clone(self):
+        return copy.deepcopy(self)
+
 
 class TrainerBattle(Battle):
     """
@@ -99,36 +102,67 @@ class WildBattle(Battle):
         # type: (Player, Monster) -> None
         super(WildBattle, self).__init__(player)
         self.wild_monster: Monster = wild_monster
+        self.winner: Player or Monster or None = None  # initial value
 
 
 class BodyOfWater:
     """
-
+    This class contains attributes of bodies of water
     """
+
+    def __init__(self, id, name, location):
+        # type: (str, str, Location) -> None
+        self.id: str = id
+        self.name: str = name
+        self.description: str or None = None
+        self.location: Location = location
+
+    def clone(self):
+        return copy.deepcopy(self)
 
 
 class Dam(BodyOfWater):
     """
-
+    This class contains attributes of dams.
     """
+
+    def __init__(self, id, name, location):
+        # type: (str, str, Location) -> None
+        super(Dam, self).__init__(id, name, location)
+        self.description: str or None = "DAM"
 
 
 class Lake(BodyOfWater):
     """
-
+    This class contains attributes of lakes.
     """
+
+    def __init__(self, id, name, location):
+        # type: (str, str, Location) -> None
+        super(Lake, self).__init__(id, name, location)
+        self.description: str or None = "LAKE"
 
 
 class River(BodyOfWater):
     """
-
+    This class contains attributes of rivers.
     """
+
+    def __init__(self, id, name, location):
+        # type: (str, str, Location) -> None
+        super(River, self).__init__(id, name, location)
+        self.description: str or None = "RIVER"
 
 
 class Sea(BodyOfWater):
     """
-
+    This class contains attributes of seas.
     """
+
+    def __init__(self, id, name, location):
+        # type: (str, str, Location) -> None
+        super(Sea, self).__init__(id, name, location)
+        self.description: str or None = "SEA"
 
 
 class Building:
@@ -241,7 +275,7 @@ class TreasureChest(Item):
 
 class Location:
     """
-
+    This class contains attributes of locations in this game.
     """
 
 
@@ -331,8 +365,13 @@ class StairsUp:
 
 class Team:
     """
-
+    This class contains attributes of teams brought to battles in this game.
     """
+    MAX_TEAM_SIZE = 20
+
+    def __init__(self, characters):
+        # type: (list) -> None
+        self.characters: list = characters
 
 
 # Initialising variables to be stored in the save game data.
