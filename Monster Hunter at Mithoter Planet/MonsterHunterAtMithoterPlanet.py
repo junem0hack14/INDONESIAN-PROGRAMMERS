@@ -49,6 +49,7 @@ class AwakenBonus:
         self.upgraded_move: Move = upgraded_move  # a Move class object
 
     def clone(self):
+        # type: () -> AwakenBonus
         return copy.deepcopy(self)
 
 
@@ -78,6 +79,7 @@ class Battle:
         self.player: Player = player
 
     def clone(self):
+        # type: () -> Battle
         return copy.deepcopy(self)
 
 
@@ -118,6 +120,7 @@ class BodyOfWater:
         self.location: Location = location
 
     def clone(self):
+        # type: () -> BodyOfWater
         return copy.deepcopy(self)
 
 
@@ -167,19 +170,37 @@ class Sea(BodyOfWater):
 
 class Building:
     """
-
+    This class contains attributes of buildings in this game.
     """
+
+    def __init__(self, building_id, name, location, floors):
+        # type: (str, str, Location, list) -> None
+        self.building_id: str = building_id
+        self.name: str = name
+        self.location: Location = location
+        self.description: str or None = None
+        self.floors: list = floors
+
+    def clone(self):
+        # type: () -> Building
+        return copy.deepcopy(self)
 
 
 class Gym(Building):
     """
-
+    This class is used to initialise gyms in this game.
     """
+
+    def __init__(self, building_id, name, location, floors, leader, clear_reward):
+        # type: (str, str, Location, list, GymLeader, Reward) -> None
+        super(Gym, self).__init__(building_id, name, location, floors)
+        self.leader: GymLeader = leader
+        self.clear_reward: Reward = clear_reward
 
 
 class Mall(Building):
     """
-
+    This class is used to initialise shopping malls in this game.
     """
 
 
@@ -221,7 +242,7 @@ class Equipment:
 
 class Floor:
     """
-
+    This class contains attributes of floors inside a building.
     """
 
 
@@ -278,6 +299,20 @@ class Location:
     This class contains attributes of locations in this game.
     """
 
+    def __init__(self, city, city_x, city_y, building, floor, floor_x, floor_y):
+        # type: (City, int, int, Building, Floor, int, int) -> None
+        self.city: City = city
+        self.city_x: int = city_x
+        self.city_y: int = city_y
+        self.building: Building = building
+        self.floor: Floor = floor
+        self.floor_x: int = floor_x
+        self.floor_y: int = floor_y
+
+    def clone(self):
+        # type: () -> Location
+        return copy.deepcopy(self)
+
 
 class Meteorite:
     """
@@ -332,6 +367,10 @@ class Question:
         self.correct_answer: str = correct_answer
         self.reward: Reward = reward
 
+    def clone(self):
+        # type: () -> Question
+        return copy.deepcopy(self)
+
 
 class QuizZone:
     """
@@ -372,6 +411,28 @@ class Team:
     def __init__(self, characters):
         # type: (list) -> None
         self.characters: list = characters
+
+    def clone(self):
+        # type: () -> Team
+        return copy.deepcopy(self)
+
+
+class Tile:
+    """
+
+    """
+
+
+class CityTile(Tile):
+    """
+
+    """
+
+
+class FloorTile(Tile):
+    """
+
+    """
 
 
 # Initialising variables to be stored in the save game data.
