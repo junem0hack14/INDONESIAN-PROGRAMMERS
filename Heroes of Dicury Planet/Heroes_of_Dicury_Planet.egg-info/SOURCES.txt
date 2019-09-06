@@ -1,0 +1,6 @@
+setup.py
+Heroes of Dicury Planet/__init__.py
+Heroes_of_Dicury_Planet.egg-info/PKG-INFO
+Heroes_of_Dicury_Planet.egg-info/SOURCES.txt
+Heroes_of_Dicury_Planet.egg-info/dependency_links.txt
+Heroes_of_Dicury_Planet.egg-info/top_level.txt
