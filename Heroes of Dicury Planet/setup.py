@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='Heroes of Dicury Planet',
-    version='pre-release 1',
+    version='pre-release 2',
     packages=['Heroes of Dicury Planet'],
     url='',
     license='',

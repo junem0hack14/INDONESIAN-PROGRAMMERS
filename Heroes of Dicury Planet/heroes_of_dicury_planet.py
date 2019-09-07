@@ -1,7 +1,7 @@
 # The names of the monsters in this game are randomly generated using the random generator in the link below.
 # https://www.fantasynamegenerators.com/
 
-# Game version: pre-release 1 (Command Line Interface Version)
+# Game version: pre-release 2 (Command Line Interface Version)
 
 
 import sys
@@ -37,11 +37,11 @@ def triangulation(n: int) -> int:
 
 def all_died(team_a, team_b):
     # type: (Team, Team) -> bool
-    for hero in team_a.heroes[0]:
+    for hero in team_a.heroes:
         if hero.curr_hp > 0:
             return False
 
-    for hero in team_b.heroes[0]:
+    for hero in team_b.heroes:
         if hero.curr_hp > 0:
             return False
 
@@ -85,9 +85,15 @@ class Action:
 
 
 class Hero:
+    """
+    This class contains attributes of heroes in this game.
+    """
     MIN_LEVEL: int = 1
     MIN_RATING: int = 1
     MAX_RATING: int = 6
+    MIN_CRIT_RATE: float = 0.15
+    MAX_CRIT_RATE: float = 1
+    MIN_CRIT_DAMAGE: float = 2
 
     def __init__(self, name, rating, max_hp, attack_power, defense, skills):
         # type: (str, int, Decimal, Decimal, Decimal, list) -> None
@@ -99,6 +105,8 @@ class Hero:
         self.max_hp: Decimal = max_hp
         self.attack_power: Decimal = attack_power
         self.defense: Decimal = defense
+        self.crit_rate: float = self.MIN_CRIT_RATE
+        self.crit_damage: float = self.MIN_CRIT_DAMAGE
         self.skills: list = skills
         self.corresponding_team: Team or None = None  # initial value
 
@@ -111,16 +119,20 @@ class Hero:
         res += "HP: " + str(self.curr_hp) + "/" + str(self.max_hp) + "\n"
         res += "Attack power: " + str(self.attack_power) + "\n"
         res += "Defense: " + str(self.defense) + "\n"
+        res += "Crit rate: " + str(100*self.crit_rate) + "%\n"
+        res += "Crit damage: " + str(100 * self.crit_damage) + "%\n"
         res += "Below is a list of skills this hero has.\n"
         for skill in self.skills:
             res += str(skill.to_string()) + "\n"
-            
+
         return res
 
     def attack(self, other):
         # type: (Hero) -> str
         return_string: str = ""  # initial value
-        damage: Decimal = self.attack_power - other.defense
+        is_crit: bool = random.random() <= self.crit_rate
+        damage: Decimal = self.attack_power * Decimal(self.crit_damage) - other.defense if is_crit else self.attack_power - \
+                                                                                               other.defense
         other.curr_hp -= damage
         return_string += str(self.name) + " did " + str(damage) + " damage on " + str(other.name)
         if other.curr_hp <= 0:
@@ -132,10 +144,11 @@ class Hero:
     def heal(self, other):
         # type: (Hero) -> str
         return_string: str = ""  # initial value
-        heal_amount: Decimal = other.max_hp * 0.2
+        heal_amount: Decimal = other.max_hp * Decimal(0.2)
         other.curr_hp += heal_amount
         other.curr_hp = other.curr_hp if other.curr_hp <= other.max_hp else other.max_hp
-        return_string += str(self.name) + " healed " + str(other.name) + " with amount of " + str(heal_amount) + " HP.\n"
+        return_string += str(self.name) + " healed " + str(other.name) + " with amount of " + str(
+            heal_amount) + " HP.\n"
         return return_string
 
     def use_skill(self, skill, target):
@@ -150,7 +163,9 @@ class Hero:
                 heal_amount) + " HP.\n"
 
         if skill.does_attack:
-            damage: Decimal = self.attack_power * skill.damage_multiplier - target.defense
+            is_crit: bool = random.random() <= self.crit_rate
+            damage: Decimal = self.attack_power * Decimal(skill.damage_multiplier) * Decimal(self.crit_damage) - target.defense \
+                if is_crit else self.attack_power * Decimal(skill.damage_multiplier) - target.defense
             target.curr_hp -= damage
             return_string += str(self.name) + " did " + str(damage) + " damage on " + str(target.name)
             if target.curr_hp <= 0:
@@ -190,8 +205,23 @@ class Team:
     """
     MAX_TEAM_SIZE = 5
 
-    def __init__(self, heroes: list) -> None:
-        self.heroes: list = heroes if len(heroes) <= self.MAX_TEAM_SIZE else []
+    def __init__(self):
+        # type: () -> None
+        self.heroes: list = []  # initial value
+
+    def add_hero_(self, hero):
+        # type: (Hero) -> bool
+        if len(self.heroes) < self.MAX_TEAM_SIZE:
+            self.heroes.append(hero)
+            return True
+        return False
+
+    def remove_hero(self, hero):
+        # type: (Hero) -> bool
+        if hero in self.heroes:
+            self.heroes.remove(hero)
+            return True
+        return False
 
 
 def main():
@@ -206,18 +236,17 @@ def main():
              [Skill("Strike", False, True, Decimal("0e0"), 3.5), Skill("Dispel", True, False, Decimal("1e4"), 0)])
     ]
 
-    player_heroes: list = []  # initial value
-    enemy_heroes: list = []  # initial value
-    for i in range(5):
-        player_heroes.append(heroes_list[random.randint(0, len(heroes_list) - 1)])
-        enemy_heroes.append(heroes_list[random.randint(0, len(heroes_list) - 1)])
+    player_team: Team = Team()
+    enemy_team: Team = Team()
 
-    player_team: Team = Team([player_heroes])
-    for hero in player_team.heroes[0]:
+    for i in range(5):
+        player_team.add_hero_(heroes_list[random.randint(0, len(heroes_list) - 1)])
+        enemy_team.add_hero_(heroes_list[random.randint(0, len(heroes_list) - 1)])
+
+    for hero in player_team.heroes:
         hero.corresponding_team = player_team
 
-    enemy_team: Team = Team([enemy_heroes])
-    for hero in enemy_team.heroes[0]:
+    for hero in enemy_team.heroes:
         hero.corresponding_team = enemy_team
 
     print("Enter 1 to battle.")
@@ -229,11 +258,11 @@ def main():
     while option != 2:
         if option == 1:
             print("Battle starts. Below is a list of your heroes.\n")
-            for hero in player_team.heroes[0]:
+            for hero in player_team.heroes:
                 print(hero.to_string())
 
             print("Below is a list of your enemy's heroes.\n")
-            for hero in enemy_team.heroes[0]:
+            for hero in enemy_team.heroes:
                 print(hero.to_string())
 
             turn: int = 0  # initial value
@@ -241,7 +270,7 @@ def main():
                 turn += 1
                 if turn % 2 == 1:
                     print("It's player's turn.")
-                    moving_hero: Hero = player_team.heroes[0][(turn // 2) % len(player_team.heroes[0])]
+                    moving_hero: Hero = player_team.heroes[(turn // 2) % len(player_team.heroes)]
                     print("Type in NORMAL ATTACK, NORMAL HEAL, or USE SKILL")
                     action_name: str = input("What do you want to do? ")
                     target: Hero or None = None  # initial value
@@ -250,69 +279,70 @@ def main():
 
                     if action_name == "NORMAL ATTACK":
                         enemy_target_index: int = int(input("Please enter index of enemy's hero: "))
-                        while enemy_target_index < 0 or enemy_target_index >= len(enemy_team.heroes[0]):
+                        while enemy_target_index < 0 or enemy_target_index >= len(enemy_team.heroes):
                             enemy_target_index: int = int(input("Sorry, invalid input! "
                                                                 "Please enter index of enemy's hero: "))
-                        target = enemy_team.heroes[0][enemy_target_index]
-                    elif action_name == "HEAL":
+                        target = enemy_team.heroes[enemy_target_index]
+                    elif action_name == "NORMAL HEAL":
                         ally_target_index: int = int(input("Please enter index of ally's hero: "))
-                        while ally_target_index < 0 or ally_target_index >= len(player_team.heroes[0]):
+                        while ally_target_index < 0 or ally_target_index >= len(player_team.heroes):
                             ally_target_index: int = int(input("Sorry, invalid input! "
                                                                "Please enter index of ally's hero: "))
-                        target = player_team.heroes[0][ally_target_index]
+                        target = player_team.heroes[ally_target_index]
 
                     elif action_name == "USE SKILL":
                         if moving_hero.skills[0].does_attack:
                             enemy_target_index: int = int(input("Please enter index of enemy's hero: "))
-                            while enemy_target_index < 0 or enemy_target_index >= len(enemy_team.heroes[0]):
+                            while enemy_target_index < 0 or enemy_target_index >= len(enemy_team.heroes):
                                 enemy_target_index: int = int(input("Sorry, invalid input! "
                                                                     "Please enter index of enemy's hero: "))
-                            target = enemy_team.heroes[0][enemy_target_index]
+                            target = enemy_team.heroes[enemy_target_index]
 
                         elif moving_hero.skills[0].does_heal:
                             ally_target_index: int = int(input("Please enter index of ally's hero: "))
-                            while ally_target_index < 0 or ally_target_index >= len(player_team.heroes[0]):
+                            while ally_target_index < 0 or ally_target_index >= len(player_team.heroes):
                                 ally_target_index: int = int(input("Sorry, invalid input! "
                                                                    "Please enter index of ally's hero: "))
-                            target = player_team.heroes[0][ally_target_index]
+                            target = player_team.heroes[ally_target_index]
 
                     action: Action = Action(moving_hero, action_name, target)
                     action.execute()
 
                     print("Current status of player's heroes in the battle are as below.\n")
-                    for hero in player_team.heroes[0]:
+                    for hero in player_team.heroes:
                         print(hero.to_string())
 
                     print("Current status of enemy's heroes in the battle are as below.\n")
-                    for hero in enemy_team.heroes[0]:
+                    for hero in enemy_team.heroes:
                         print(hero.to_string())
 
                 else:
                     print("It's enemy's turn.")
-                    moving_hero: Hero = enemy_team.heroes[0][(turn // 2) % len(enemy_team.heroes[0])]
+                    moving_hero: Hero = enemy_team.heroes[((turn // 2) - 1) % len(enemy_team.heroes)]
                     action_name: str = Action.POSSIBLE_NAMES[random.randint(0, len(Action.POSSIBLE_NAMES) - 1)]
+                    print(action_name)
                     target: Hero or None = None  # initial value
                     if action_name == "NORMAL ATTACK":
-                        target = player_team.heroes[0][random.randint(0, len(player_team.heroes[0]) - 1)]
-                    elif action_name == "HEAL":
-                        target = enemy_team.heroes[0][random.randint(0, len(enemy_team.heroes[0]) - 1)]
+                        target = player_team.heroes[random.randint(0, len(player_team.heroes) - 1)]
+                    elif action_name == "NORMAL HEAL":
+                        target = enemy_team.heroes[random.randint(0, len(enemy_team.heroes) - 1)]
 
                     elif action_name == "USE SKILL":
                         if moving_hero.skills[0].does_attack:
-                            target = player_team.heroes[0][random.randint(0, len(player_team.heroes[0]) - 1)]
+                            target = player_team.heroes[random.randint(0, len(player_team.heroes) - 1)]
 
                         elif moving_hero.skills[0].does_heal:
-                            target = enemy_team.heroes[0][random.randint(0, len(enemy_team.heroes) - 1)]
+                            target = enemy_team.heroes[random.randint(0, len(enemy_team.heroes) - 1)]
 
                     action: Action = Action(moving_hero, action_name, target)
                     action.execute()
 
                     print("Current status of player's heroes in the battle are as below.\n")
-                    for hero in player_team.heroes[0]:
+                    for hero in player_team.heroes:
                         print(hero.to_string())
 
                     print("Current status of enemy's heroes in the battle are as below.\n")
-                    for hero in enemy_team.heroes[0]:
+                    for hero in enemy_team.heroes:
                         print(hero.to_string())
 
         option: int = int(input("Please enter a number: "))
