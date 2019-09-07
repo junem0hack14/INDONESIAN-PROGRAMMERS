@@ -1,7 +1,7 @@
 # The names of the monsters in this game are randomly generated using the random generator in the link below.
 # https://www.fantasynamegenerators.com/
 
-# Game version: pre-release 2 (Command Line Interface Version)
+# Game version: pre-release 3 (Command Line Interface Version)
 
 
 import sys
@@ -35,14 +35,10 @@ def triangulation(n: int) -> int:
     return int(n * (n - 1) / 2)
 
 
-def all_died(team_a, team_b):
-    # type: (Team, Team) -> bool
-    for hero in team_a.heroes:
-        if hero.curr_hp > 0:
-            return False
-
-    for hero in team_b.heroes:
-        if hero.curr_hp > 0:
+def all_died(team):
+    # type: (Team) -> bool
+    for hero in team.heroes:
+        if hero.get_is_alive():
             return False
 
     return True
@@ -55,11 +51,12 @@ class Action:
 
     POSSIBLE_NAMES: list = ["NORMAL ATTACK", "NORMAL HEAL", "USE SKILL"]
 
-    def __init__(self, user, name, target):
-        # type: (Hero, str, Hero) -> None
+    def __init__(self, user, name, target, skill_to_use=None):
+        # type: (Hero, str, Hero, Skill or None) -> None
         self.user: Hero = user
         self.name: str or None = name if name in self.POSSIBLE_NAMES else None
         self.target: Hero = target
+        self.skill_to_use: Skill or None = skill_to_use
 
     def execute(self):
         # type: () -> bool
@@ -74,11 +71,12 @@ class Action:
                 return True
             return False
         elif self.name == "USE SKILL":
-            skill_to_use: Skill = self.user.skills[0]
-            if (skill_to_use.does_attack and self.user.corresponding_team != self.target.corresponding_team) \
-                    or (skill_to_use.does_heal and self.user.corresponding_team == self.target.corresponding_team):
-                self.user.use_skill(skill_to_use, self.target)
-                return True
+            if self.skill_to_use is not None:
+                if (self.skill_to_use.does_attack and self.user.corresponding_team != self.target.corresponding_team) \
+                        or (self.skill_to_use.does_heal and self.user.corresponding_team == self.target.corresponding_team):
+                    self.user.use_skill(self.skill_to_use, self.target)
+                    return True
+                return False
             return False
         else:
             return False
@@ -108,7 +106,13 @@ class Hero:
         self.crit_rate: float = self.MIN_CRIT_RATE
         self.crit_damage: float = self.MIN_CRIT_DAMAGE
         self.skills: list = skills
+        self.is_alive = True
         self.corresponding_team: Team or None = None  # initial value
+
+    def get_is_alive(self):
+        # type: () -> bool
+        self.is_alive = self.curr_hp > 0
+        return self.is_alive
 
     def to_string(self) -> str:
         res: str = ""  # initial value
@@ -125,6 +129,7 @@ class Hero:
         for skill in self.skills:
             res += str(skill.to_string()) + "\n"
 
+        res += "Is it alive? " + str(self.get_is_alive()) + "\n"
         return res
 
     def attack(self, other):
@@ -231,9 +236,11 @@ def main():
     """
     heroes_list: list = [
         Hero("Hydra", 1, Decimal("5e4"), Decimal("2.5e3"), Decimal("2.47e3"),
-             [Skill("Strike", False, True, Decimal("0e0"), 3.5), Skill("Dispel", True, False, Decimal("1e4"), 0)]),
+             [Skill("Strike", False, True, Decimal("0e0"), 3.5), Skill("Dispel", True, False, Decimal("1e4"), 0),
+              Skill("Smother", False, True, Decimal("0e0"), 8)]),
         Hero("Cygrus", 1, Decimal("4.78e4"), Decimal("2.7e3"), Decimal("2.11e3"),
-             [Skill("Strike", False, True, Decimal("0e0"), 3.5), Skill("Dispel", True, False, Decimal("1e4"), 0)])
+             [Skill("Strike", False, True, Decimal("0e0"), 3.5), Skill("Dispel", True, False, Decimal("1e4"), 0),
+              Skill("Smother", False, True, Decimal("0e0"), 8)])
     ]
 
     player_team: Team = Team()
@@ -266,14 +273,23 @@ def main():
                 print(hero.to_string())
 
             turn: int = 0  # initial value
-            while not all_died(player_team, enemy_team):
+            while not all_died(player_team) and not all_died(enemy_team):
                 turn += 1
                 if turn % 2 == 1:
                     print("It's player's turn.")
-                    moving_hero: Hero = player_team.heroes[(turn // 2) % len(player_team.heroes)]
+                    hero_index: int = (turn // 2) % len(player_team.heroes)
+                    moving_hero: Hero = player_team.heroes[hero_index]
+                    while not moving_hero.get_is_alive():
+                        hero_index += 1
+                        if hero_index >= len(player_team.heroes):
+                            hero_index -= len(player_team.heroes)
+
+                        moving_hero = player_team.heroes[hero_index]
+
                     print("Type in NORMAL ATTACK, NORMAL HEAL, or USE SKILL")
                     action_name: str = input("What do you want to do? ")
                     target: Hero or None = None  # initial value
+                    skill_to_use: Skill or None = None  # initial value
                     while action_name not in Action.POSSIBLE_NAMES:
                         action_name: str = input("Invalid input! What do you want to do? ")
 
@@ -282,30 +298,58 @@ def main():
                         while enemy_target_index < 0 or enemy_target_index >= len(enemy_team.heroes):
                             enemy_target_index: int = int(input("Sorry, invalid input! "
                                                                 "Please enter index of enemy's hero: "))
+
+                        while not enemy_team.heroes[enemy_target_index].get_is_alive():
+                            enemy_target_index: int = int(input("Sorry, invalid input! "
+                                                                "Please enter index of enemy's hero: "))
+
                         target = enemy_team.heroes[enemy_target_index]
                     elif action_name == "NORMAL HEAL":
                         ally_target_index: int = int(input("Please enter index of ally's hero: "))
                         while ally_target_index < 0 or ally_target_index >= len(player_team.heroes):
                             ally_target_index: int = int(input("Sorry, invalid input! "
                                                                "Please enter index of ally's hero: "))
+
+                        while not player_team.heroes[ally_target_index].get_is_alive():
+                            ally_target_index: int = int(input("Sorry, invalid input! "
+                                                               "Please enter index of ally's hero: "))
+
                         target = player_team.heroes[ally_target_index]
 
                     elif action_name == "USE SKILL":
-                        if moving_hero.skills[0].does_attack:
+                        skill_index: int = int(input("Please enter the index of the skill you want to use: "))
+                        while skill_index < 0 or skill_index >= len(moving_hero.skills):
+                            skill_index: int = int(input("Invalid input! "
+                                                         "Please enter the index of the skill you want to use: "))
+
+                        skill_to_use = moving_hero.skills[skill_index]
+
+                        if skill_to_use.does_attack:
                             enemy_target_index: int = int(input("Please enter index of enemy's hero: "))
                             while enemy_target_index < 0 or enemy_target_index >= len(enemy_team.heroes):
                                 enemy_target_index: int = int(input("Sorry, invalid input! "
                                                                     "Please enter index of enemy's hero: "))
+
+                            while not enemy_team.heroes[enemy_target_index].get_is_alive():
+                                enemy_target_index: int = int(input("Sorry, invalid input! "
+                                                                    "Please enter index of enemy's hero: "))
+
                             target = enemy_team.heroes[enemy_target_index]
 
-                        elif moving_hero.skills[0].does_heal:
+                        elif skill_to_use.does_heal:
                             ally_target_index: int = int(input("Please enter index of ally's hero: "))
                             while ally_target_index < 0 or ally_target_index >= len(player_team.heroes):
                                 ally_target_index: int = int(input("Sorry, invalid input! "
                                                                    "Please enter index of ally's hero: "))
+
+                            while not player_team.heroes[ally_target_index].get_is_alive():
+                                ally_target_index: int = int(input("Sorry, invalid input! "
+                                                                   "Please enter index of ally's hero: "))
+
                             target = player_team.heroes[ally_target_index]
 
-                    action: Action = Action(moving_hero, action_name, target)
+                    action: Action = Action(moving_hero, action_name, target, skill_to_use) \
+                        if skill_to_use is not None else Action(moving_hero, action_name, target)
                     action.execute()
 
                     print("Current status of player's heroes in the battle are as below.\n")
@@ -315,26 +359,52 @@ def main():
                     print("Current status of enemy's heroes in the battle are as below.\n")
                     for hero in enemy_team.heroes:
                         print(hero.to_string())
+
+                    if all_died(player_team):
+                        print("You lose!")
+
+                    if all_died(enemy_team):
+                        print("You win!")
 
                 else:
                     print("It's enemy's turn.")
-                    moving_hero: Hero = enemy_team.heroes[((turn // 2) - 1) % len(enemy_team.heroes)]
+                    hero_index: int = ((turn // 2) - 1) % len(enemy_team.heroes)
+                    moving_hero: Hero = enemy_team.heroes[hero_index]
+                    while not moving_hero.get_is_alive():
+                        hero_index += 1
+                        if hero_index >= len(enemy_team.heroes):
+                            hero_index -= len(enemy_team.heroes)
+
+                        moving_hero = enemy_team.heroes[hero_index]
+
                     action_name: str = Action.POSSIBLE_NAMES[random.randint(0, len(Action.POSSIBLE_NAMES) - 1)]
-                    print(action_name)
+                    skill_to_use: Skill or None = None  # initial value
                     target: Hero or None = None  # initial value
                     if action_name == "NORMAL ATTACK":
                         target = player_team.heroes[random.randint(0, len(player_team.heroes) - 1)]
-                    elif action_name == "NORMAL HEAL":
-                        target = enemy_team.heroes[random.randint(0, len(enemy_team.heroes) - 1)]
-
-                    elif action_name == "USE SKILL":
-                        if moving_hero.skills[0].does_attack:
+                        while not target.get_is_alive():
                             target = player_team.heroes[random.randint(0, len(player_team.heroes) - 1)]
 
-                        elif moving_hero.skills[0].does_heal:
+                    elif action_name == "NORMAL HEAL":
+                        target = enemy_team.heroes[random.randint(0, len(enemy_team.heroes) - 1)]
+                        while not target.get_is_alive():
                             target = enemy_team.heroes[random.randint(0, len(enemy_team.heroes) - 1)]
 
-                    action: Action = Action(moving_hero, action_name, target)
+                    elif action_name == "USE SKILL":
+                        skill_index: int = random.randint(0, len(moving_hero.skills) - 1)
+                        skill_to_use = moving_hero.skills[skill_index]
+                        if skill_to_use.does_attack:
+                            target = player_team.heroes[random.randint(0, len(player_team.heroes) - 1)]
+                            while not target.get_is_alive():
+                                target = player_team.heroes[random.randint(0, len(player_team.heroes) - 1)]
+
+                        elif skill_to_use.does_heal:
+                            target = enemy_team.heroes[random.randint(0, len(enemy_team.heroes) - 1)]
+                            while not target.get_is_alive():
+                                target = enemy_team.heroes[random.randint(0, len(enemy_team.heroes) - 1)]
+
+                    action: Action = Action(moving_hero, action_name, target, skill_to_use) \
+                        if skill_to_use is not None else Action(moving_hero, action_name, target)
                     action.execute()
 
                     print("Current status of player's heroes in the battle are as below.\n")
@@ -344,6 +414,12 @@ def main():
                     print("Current status of enemy's heroes in the battle are as below.\n")
                     for hero in enemy_team.heroes:
                         print(hero.to_string())
+
+                    if all_died(player_team):
+                        print("You lose!")
+
+                    if all_died(enemy_team):
+                        print("You win!")
 
         option: int = int(input("Please enter a number: "))
         while option < 1 or option > 2:
