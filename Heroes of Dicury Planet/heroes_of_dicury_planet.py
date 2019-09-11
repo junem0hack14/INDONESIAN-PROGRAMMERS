@@ -162,37 +162,39 @@ class PrefixStat:
                                   "CRIT_RATE_UP", "CRIT_DAMAGE_UP", "EVASION_CHANCE_UP", "RESISTANCE_UP", "ACCURACY_UP"]
 
     def __init__(self, prefix_stat_type, corresponding_rune):
-        self.prefix_stat_type = prefix_stat_type if prefix_stat_type in self.POSSIBLE_PREFIX_STAT_TYPES else None
-        self.corresponding_rune = corresponding_rune  # a Rune class object
-        self.max_hp_up = Decimal("1e10") * 10 ** (10 + self.corresponding_rune.rating ** 2) if \
+        # type: (str, Rune) -> None
+        self.prefix_stat_type: str = prefix_stat_type if prefix_stat_type in self.POSSIBLE_PREFIX_STAT_TYPES else None
+        self.corresponding_rune: Rune = corresponding_rune  # a Rune class object
+        self.max_hp_up: Decimal = Decimal("1e10") * 10 ** (10 + self.corresponding_rune.rating ** 2) if \
             self.prefix_stat_type == "MAX_HP_UP" else 0
-        self.max_hp_percentage_up = 2 * self.corresponding_rune.rating - 1 if \
+        self.max_hp_percentage_up: float = 2 * self.corresponding_rune.rating - 1 if \
             self.prefix_stat_type == "MAX_HP_PERCENTAGE_UP" else 0
-        self.attack_up = Decimal("1e10") * 10 ** (8 + self.corresponding_rune.rating ** 2) if \
+        self.attack_up: Decimal = Decimal("1e10") * 10 ** (8 + self.corresponding_rune.rating ** 2) if \
             self.prefix_stat_type == "ATTACK_UP" else 0
-        self.attack_percentage_up = 2 * self.corresponding_rune.rating - 1 if \
+        self.attack_percentage_up: float = 2 * self.corresponding_rune.rating - 1 if \
             self.prefix_stat_type == "ATTACK_PERCENTAGE_UP" else 0
-        self.defense_up = Decimal("1e10") * 10 ** (8 + self.corresponding_rune.rating ** 2) if \
+        self.defense_up: Decimal = Decimal("1e10") * 10 ** (8 + self.corresponding_rune.rating ** 2) if \
             self.prefix_stat_type == "DEFENSE_UP" else 0
-        self.defense_percentage_up = 2 * self.corresponding_rune.rating - 1 if \
+        self.defense_percentage_up: float = 2 * self.corresponding_rune.rating - 1 if \
             self.prefix_stat_type == "DEFENSE_PERCENTAGE_UP" else 0
-        self.attack_speed_up = 2 * self.corresponding_rune.rating - 1 if self.prefix_stat_type == "ATTACK_SPEED_UP" \
+        self.attack_speed_up: float = 2 * self.corresponding_rune.rating - 1 if self.prefix_stat_type == "ATTACK_SPEED_UP" \
             else 0
-        self.max_magic_points_up = Decimal("1e10") * 10 ** (10 + self.corresponding_rune.rating ** 2) if \
+        self.max_magic_points_up: Decimal = Decimal("1e10") * 10 ** (10 + self.corresponding_rune.rating ** 2) if \
             self.prefix_stat_type == "MAX_MAGIC_POINTS_UP" else 0
-        self.max_magic_points_percentage_up = 2 * self.corresponding_rune.rating - 1 if \
+        self.max_magic_points_percentage_up: float = 2 * self.corresponding_rune.rating - 1 if \
             self.prefix_stat_type == "MAX_MAGIC_POINTS_PERCENTAGE_UP" else 0
-        self.max_energy_up = Decimal("1e10") * 10 ** (10 + self.corresponding_rune.rating ** 2) if \
+        self.max_energy_up: Decimal = Decimal("1e10") * 10 ** (10 + self.corresponding_rune.rating ** 2) if \
             self.prefix_stat_type == "MAX_ENERGY_UP" else 0
-        self.max_energy_percentage_up = 2 * self.corresponding_rune.rating - 1 if \
+        self.max_energy_percentage_up: float = 2 * self.corresponding_rune.rating - 1 if \
             self.prefix_stat_type == "MAX_ENERGY_PERCENTAGE_UP" else 0
-        self.crit_rate_up = self.corresponding_rune.rating if self.prefix_stat_type == "CRIT_RATE_UP" else 0
-        self.crit_damage_up = 2 * self.corresponding_rune.rating - 1 if self.prefix_stat_type == "CRIT_DAMAGE_UP" else 0
-        self.evasion_chance_up = self.corresponding_rune.rating if self.prefix_stat_type == "EVASION_CHANCE_UP" else 0
-        self.resistance_up = self.corresponding_rune.rating if self.prefix_stat_type == "RESISTANCE_UP" else 0
-        self.accuracy_up = self.corresponding_rune.rating if self.prefix_stat_type == "ACCURACY_UP" else 0
+        self.crit_rate_up: float = self.corresponding_rune.rating if self.prefix_stat_type == "CRIT_RATE_UP" else 0
+        self.crit_damage_up: float = 2 * self.corresponding_rune.rating - 1 if self.prefix_stat_type == "CRIT_DAMAGE_UP" else 0
+        self.evasion_chance_up: float = self.corresponding_rune.rating if self.prefix_stat_type == "EVASION_CHANCE_UP" else 0
+        self.resistance_up: float = self.corresponding_rune.rating if self.prefix_stat_type == "RESISTANCE_UP" else 0
+        self.accuracy_up: float = self.corresponding_rune.rating if self.prefix_stat_type == "ACCURACY_UP" else 0
 
     def clone(self):
+        # type: () -> PrefixStat
         return copy.deepcopy(self)
 
 
@@ -205,24 +207,26 @@ class MainStat:
                  defense_percentage_up, attack_speed_up, max_magic_points_up, max_magic_points_percentage_up,
                  max_energy_up, max_energy_percentage_up, crit_rate_up, crit_damage_up, evasion_chance_up,
                  resistance_up, accuracy_up):
-        self.max_hp_up = max_hp_up
-        self.max_hp_percentage_up = max_hp_percentage_up
-        self.attack_up = attack_up
-        self.attack_percentage_up = attack_percentage_up
-        self.defense_up = defense_up
-        self.defense_percentage_up = defense_percentage_up
-        self.attack_speed_up = attack_speed_up
-        self.max_magic_points_up = max_magic_points_up
-        self.max_magic_points_percentage_up = max_magic_points_percentage_up
-        self.max_energy_up = max_energy_up
-        self.max_energy_percentage_up = max_energy_percentage_up
-        self.crit_rate_up = crit_rate_up
-        self.crit_damage_up = crit_damage_up
-        self.evasion_chance_up = evasion_chance_up
-        self.resistance_up = resistance_up
-        self.accuracy_up = accuracy_up
+        # type: (Decimal, float, Decimal, float, Decimal, float, float, Decimal, float, Decimal, float, float, float, float, float, float) -> None
+        self.max_hp_up: Decimal = max_hp_up
+        self.max_hp_percentage_up: float = max_hp_percentage_up
+        self.attack_up: Decimal = attack_up
+        self.attack_percentage_up: float = attack_percentage_up
+        self.defense_up: Decimal = defense_up
+        self.defense_percentage_up: float = defense_percentage_up
+        self.attack_speed_up: float = attack_speed_up
+        self.max_magic_points_up: Decimal = max_magic_points_up
+        self.max_magic_points_percentage_up: float = max_magic_points_percentage_up
+        self.max_energy_up: Decimal = max_energy_up
+        self.max_energy_percentage_up: float = max_energy_percentage_up
+        self.crit_rate_up: float = crit_rate_up
+        self.crit_damage_up: float = crit_damage_up
+        self.evasion_chance_up: float = evasion_chance_up
+        self.resistance_up: float = resistance_up
+        self.accuracy_up: float = accuracy_up
 
     def clone(self):
+        # type: () -> MainStat
         return copy.deepcopy(self)
 
 
@@ -235,24 +239,26 @@ class RuneStat:
                  defense_percentage_up, attack_speed_up, max_magic_points_up, max_magic_points_percentage_up,
                  max_energy_up, max_energy_percentage_up, crit_rate_up, crit_damage_up, evasion_chance_up,
                  resistance_up, accuracy_up):
-        self.max_hp_up = max_hp_up
-        self.max_hp_percentage_up = max_hp_percentage_up
-        self.attack_up = attack_up
-        self.attack_percentage_up = attack_percentage_up
-        self.defense_up = defense_up
-        self.defense_percentage_up = defense_percentage_up
-        self.attack_speed_up = attack_speed_up
-        self.max_magic_points_up = max_magic_points_up
-        self.max_magic_points_percentage_up = max_magic_points_percentage_up
-        self.max_energy_up = max_energy_up
-        self.max_energy_percentage_up = max_energy_percentage_up
-        self.crit_rate_up = crit_rate_up
-        self.crit_damage_up = crit_damage_up
-        self.evasion_chance_up = evasion_chance_up
-        self.resistance_up = resistance_up
-        self.accuracy_up = accuracy_up
+        # type: (Decimal, float, Decimal, float, Decimal, float, float, Decimal, float, Decimal, float, float, float, float, float, float) -> None
+        self.max_hp_up: Decimal = max_hp_up
+        self.max_hp_percentage_up: float = max_hp_percentage_up
+        self.attack_up: Decimal = attack_up
+        self.attack_percentage_up: float = attack_percentage_up
+        self.defense_up: Decimal = defense_up
+        self.defense_percentage_up: float = defense_percentage_up
+        self.attack_speed_up: float = attack_speed_up
+        self.max_magic_points_up: Decimal = max_magic_points_up
+        self.max_magic_points_percentage_up: float = max_magic_points_percentage_up
+        self.max_energy_up: Decimal = max_energy_up
+        self.max_energy_percentage_up: float = max_energy_percentage_up
+        self.crit_rate_up: float = crit_rate_up
+        self.crit_damage_up: float = crit_damage_up
+        self.evasion_chance_up: float = evasion_chance_up
+        self.resistance_up: float = resistance_up
+        self.accuracy_up: float = accuracy_up
 
     def clone(self):
+        # type: () -> RuneStat
         return copy.deepcopy(self)
 
 
@@ -266,28 +272,30 @@ class SetEffect:
                  evasion_chance_up, resistance_up, accuracy_up, extra_turn_chance_up, counterattack_chance_up,
                  life_drain_percentage_up, stun_rate_up, allies_attack_percentage_up, allies_defense_percentage_up,
                  allies_max_hp_percentage_up, allies_accuracy_up, allies_resistance_up):
-        self.max_hp_percentage_up = max_hp_percentage_up
-        self.attack_percentage_up = attack_percentage_up
-        self.defense_percentage_up = defense_percentage_up
-        self.attack_speed_percentage_up = attack_speed_percentage_up
-        self.max_magic_points_percentage_up = max_magic_points_percentage_up
-        self.max_energy_percentage_up = max_energy_percentage_up
-        self.crit_rate_up = crit_rate_up
-        self.crit_damage_up = crit_damage_up
-        self.evasion_chance_up = evasion_chance_up
-        self.resistance_up = resistance_up
-        self.accuracy_up = accuracy_up
-        self.extra_turn_chance_up = extra_turn_chance_up
-        self.counterattack_chance_up = counterattack_chance_up
-        self.life_drain_percentage_up = life_drain_percentage_up
-        self.stun_rate_up = stun_rate_up
-        self.allies_attack_percentage_up = allies_attack_percentage_up
-        self.allies_defense_percentage_up = allies_defense_percentage_up
-        self.allies_max_hp_percentage_up = allies_max_hp_percentage_up
-        self.allies_accuracy_up = allies_accuracy_up
-        self.allies_resistance_up = allies_resistance_up
+        # type: (float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float ,float) -> None
+        self.max_hp_percentage_up: float = max_hp_percentage_up
+        self.attack_percentage_up: float = attack_percentage_up
+        self.defense_percentage_up: float = defense_percentage_up
+        self.attack_speed_percentage_up: float = attack_speed_percentage_up
+        self.max_magic_points_percentage_up: float = max_magic_points_percentage_up
+        self.max_energy_percentage_up: float = max_energy_percentage_up
+        self.crit_rate_up: float = crit_rate_up
+        self.crit_damage_up: float = crit_damage_up
+        self.evasion_chance_up: float = evasion_chance_up
+        self.resistance_up: float = resistance_up
+        self.accuracy_up: float = accuracy_up
+        self.extra_turn_chance_up: float = extra_turn_chance_up
+        self.counterattack_chance_up: float = counterattack_chance_up
+        self.life_drain_percentage_up: float = life_drain_percentage_up
+        self.stun_rate_up: float = stun_rate_up
+        self.allies_attack_percentage_up: float = allies_attack_percentage_up
+        self.allies_defense_percentage_up: float = allies_defense_percentage_up
+        self.allies_max_hp_percentage_up: float = allies_max_hp_percentage_up
+        self.allies_accuracy_up: float = allies_accuracy_up
+        self.allies_resistance_up: float = allies_resistance_up
 
     def clone(self):
+        # type: () -> SetEffect
         return copy.deepcopy(self)
 
 
@@ -297,14 +305,16 @@ class RuneUpgrade:
     """
 
     def __init__(self, rune_upgrade_id, name, description, purchase_coin_cost, application_coin_cost, sell_coin_gain):
-        self.rune_upgrade_id = rune_upgrade_id
-        self.name = name
-        self.description = description
-        self.purchase_coin_cost = purchase_coin_cost
-        self.application_coin_cost = application_coin_cost
-        self.sell_coin_gain = sell_coin_gain
+        # type: (str, str, str, Decimal, Decimal, Decimal) -> None
+        self.rune_upgrade_id: str = rune_upgrade_id
+        self.name: str = name
+        self.description: str = description
+        self.purchase_coin_cost: Decimal = purchase_coin_cost
+        self.application_coin_cost: Decimal = application_coin_cost
+        self.sell_coin_gain: Decimal = sell_coin_gain
 
     def clone(self):
+        # type: () -> RuneUpgrade
         return copy.deepcopy(self)
 
 
@@ -319,24 +329,25 @@ class EnchantedGem(RuneUpgrade):
                  max_magic_points_up_increase, max_magic_points_percentage_up_increase, max_energy_up_increase,
                  max_energy_percentage_up_increase, crit_rate_up_increase, crit_damage_up_increase,
                  evasion_chance_up_increase, resistance_up_increase, accuracy_up_increase):
+        # type: (str, str, str, Decimal, Decimal, Decimal, Decimal, float, Decimal, float, Decimal, float, float, Decimal, float, Decimal, float, float, float, float, float, float) -> None
         RuneUpgrade.__init__(self, rune_upgrade_id, name, description, purchase_coin_cost, application_coin_cost,
                              sell_coin_gain)
-        self.max_hp_up_increase = max_hp_up_increase
-        self.max_hp_percentage_up_increase = max_hp_percentage_up_increase
-        self.attack_up_increase = attack_up_increase
-        self.attack_percentage_up_increase = attack_percentage_up_increase
-        self.defense_up_increase = defense_up_increase
-        self.defense_percentage_up_increase = defense_percentage_up_increase
-        self.attack_speed_up_increase = attack_speed_up_increase
-        self.max_magic_points_up_increase = max_magic_points_up_increase
-        self.max_magic_points_percentage_up_increase = max_magic_points_percentage_up_increase
-        self.max_energy_up_increase = max_energy_up_increase
-        self.max_energy_percentage_up_increase = max_energy_percentage_up_increase
-        self.crit_rate_up_increase = crit_rate_up_increase
-        self.crit_damage_up_increase = crit_damage_up_increase
-        self.evasion_chance_up_increase = evasion_chance_up_increase
-        self.resistance_up_increase = resistance_up_increase
-        self.accuracy_up_increase = accuracy_up_increase
+        self.max_hp_up_increase: Decimal = max_hp_up_increase
+        self.max_hp_percentage_up_increase: float = max_hp_percentage_up_increase
+        self.attack_up_increase: Decimal = attack_up_increase
+        self.attack_percentage_up_increase: float = attack_percentage_up_increase
+        self.defense_up_increase: Decimal = defense_up_increase
+        self.defense_percentage_up_increase: float = defense_percentage_up_increase
+        self.attack_speed_up_increase: float = attack_speed_up_increase
+        self.max_magic_points_up_increase: Decimal = max_magic_points_up_increase
+        self.max_magic_points_percentage_up_increase: float = max_magic_points_percentage_up_increase
+        self.max_energy_up_increase: Decimal = max_energy_up_increase
+        self.max_energy_percentage_up_increase: float = max_energy_percentage_up_increase
+        self.crit_rate_up_increase: float = crit_rate_up_increase
+        self.crit_damage_up_increase: float = crit_damage_up_increase
+        self.evasion_chance_up_increase: float = evasion_chance_up_increase
+        self.resistance_up_increase: float = resistance_up_increase
+        self.accuracy_up_increase: float = accuracy_up_increase
 
 
 class Grindstone(RuneUpgrade):
@@ -350,24 +361,25 @@ class Grindstone(RuneUpgrade):
                  max_magic_points_up_increase, max_magic_points_percentage_up_increase, max_energy_up_increase,
                  max_energy_percentage_up_increase, crit_rate_up_increase, crit_damage_up_increase,
                  evasion_chance_up_increase, resistance_up_increase, accuracy_up_increase):
+        # type: (str, str, str, Decimal, Decimal, Decimal, Decimal, float, Decimal, float, Decimal, float, float, Decimal, float, Decimal, float, float, float, float, float, float) -> None
         RuneUpgrade.__init__(self, rune_upgrade_id, name, description, purchase_coin_cost, application_coin_cost,
                              sell_coin_gain)
-        self.max_hp_up_increase = max_hp_up_increase
-        self.max_hp_percentage_up_increase = max_hp_percentage_up_increase
-        self.attack_up_increase = attack_up_increase
-        self.attack_percentage_up_increase = attack_percentage_up_increase
-        self.defense_up_increase = defense_up_increase
-        self.defense_percentage_up_increase = defense_percentage_up_increase
-        self.attack_speed_up_increase = attack_speed_up_increase
-        self.max_magic_points_up_increase = max_magic_points_up_increase
-        self.max_magic_points_percentage_up_increase = max_magic_points_percentage_up_increase
-        self.max_energy_up_increase = max_energy_up_increase
-        self.max_energy_percentage_up_increase = max_energy_percentage_up_increase
-        self.crit_rate_up_increase = crit_rate_up_increase
-        self.crit_damage_up_increase = crit_damage_up_increase
-        self.evasion_chance_up_increase = evasion_chance_up_increase
-        self.resistance_up_increase = resistance_up_increase
-        self.accuracy_up_increase = accuracy_up_increase
+        self.max_hp_up_increase: Decimal = max_hp_up_increase
+        self.max_hp_percentage_up_increase: float = max_hp_percentage_up_increase
+        self.attack_up_increase: Decimal = attack_up_increase
+        self.attack_percentage_up_increase: float = attack_percentage_up_increase
+        self.defense_up_increase: Decimal = defense_up_increase
+        self.defense_percentage_up_increase: float = defense_percentage_up_increase
+        self.attack_speed_up_increase: float = attack_speed_up_increase
+        self.max_magic_points_up_increase: Decimal = max_magic_points_up_increase
+        self.max_magic_points_percentage_up_increase: float = max_magic_points_percentage_up_increase
+        self.max_energy_up_increase: Decimal = max_energy_up_increase
+        self.max_energy_percentage_up_increase: float = max_energy_percentage_up_increase
+        self.crit_rate_up_increase: float = crit_rate_up_increase
+        self.crit_damage_up_increase: float = crit_damage_up_increase
+        self.evasion_chance_up_increase: float = evasion_chance_up_increase
+        self.resistance_up_increase: float = resistance_up_increase
+        self.accuracy_up_increase: float = accuracy_up_increase
 
 
 class ReappraisalStone(RuneUpgrade):
@@ -381,24 +393,25 @@ class ReappraisalStone(RuneUpgrade):
                  max_magic_points_up_increase, max_magic_points_percentage_up_increase, max_energy_up_increase,
                  max_energy_percentage_up_increase, crit_rate_up_increase, crit_damage_up_increase,
                  evasion_chance_up_increase, resistance_up_increase, accuracy_up_increase):
+        # type: (str, str, str, Decimal, Decimal, Decimal, Decimal, float, Decimal, float, Decimal, float, float, Decimal, float, Decimal, float, float, float, float, float, float) -> None
         RuneUpgrade.__init__(self, rune_upgrade_id, name, description, purchase_coin_cost, application_coin_cost,
                              sell_coin_gain)
-        self.max_hp_up_increase = max_hp_up_increase
-        self.max_hp_percentage_up_increase = max_hp_percentage_up_increase
-        self.attack_up_increase = attack_up_increase
-        self.attack_percentage_up_increase = attack_percentage_up_increase
-        self.defense_up_increase = defense_up_increase
-        self.defense_percentage_up_increase = defense_percentage_up_increase
-        self.attack_speed_up_increase = attack_speed_up_increase
-        self.max_magic_points_up_increase = max_magic_points_up_increase
-        self.max_magic_points_percentage_up_increase = max_magic_points_percentage_up_increase
-        self.max_energy_up_increase = max_energy_up_increase
-        self.max_energy_percentage_up_increase = max_energy_percentage_up_increase
-        self.crit_rate_up_increase = crit_rate_up_increase
-        self.crit_damage_up_increase = crit_damage_up_increase
-        self.evasion_chance_up_increase = evasion_chance_up_increase
-        self.resistance_up_increase = resistance_up_increase
-        self.accuracy_up_increase = accuracy_up_increase
+        self.max_hp_up_increase: Decimal = max_hp_up_increase
+        self.max_hp_percentage_up_increase: float = max_hp_percentage_up_increase
+        self.attack_up_increase: Decimal = attack_up_increase
+        self.attack_percentage_up_increase: float = attack_percentage_up_increase
+        self.defense_up_increase: Decimal = defense_up_increase
+        self.defense_percentage_up_increase: float = defense_percentage_up_increase
+        self.attack_speed_up_increase: float = attack_speed_up_increase
+        self.max_magic_points_up_increase: Decimal = max_magic_points_up_increase
+        self.max_magic_points_percentage_up_increase: float = max_magic_points_percentage_up_increase
+        self.max_energy_up_increase: Decimal = max_energy_up_increase
+        self.max_energy_percentage_up_increase: float = max_energy_percentage_up_increase
+        self.crit_rate_up_increase: float = crit_rate_up_increase
+        self.crit_damage_up_increase: float = crit_damage_up_increase
+        self.evasion_chance_up_increase: float = evasion_chance_up_increase
+        self.resistance_up_increase: float = resistance_up_increase
+        self.accuracy_up_increase: float = accuracy_up_increase
 
 
 class Rune:
@@ -411,7 +424,7 @@ class Rune:
     MAX_RATING: int = 6
     MIN_LEVEL: int = 0
     MAX_LEVEL: int = 100
-    POSSIBLE_SET_NAMES = ["ENERGY", "FATAL", "RAGE", "GUARD", "BLADE", "DODGE", "MAGIC", "ENDURANCE", "ENDURE", "FOCUS",
+    POSSIBLE_SET_NAMES: list = ["ENERGY", "FATAL", "RAGE", "GUARD", "BLADE", "DODGE", "MAGIC", "ENDURANCE", "ENDURE", "FOCUS",
                           "SWIFT", "VIOLENT", "REVENGE", "VAMPIRE", "DESPAIR", "FIGHT", "DETERMINATION", "ENHANCE",
                           "ACCURACY", "TOLERANCE"]
 
@@ -422,11 +435,11 @@ class Rune:
         self.slot_number: int = slot_number if self.MIN_SLOT_NUMBER <= slot_number <= self.MAX_SLOT_NUMBER else 1
         self.rating: int = rating if self.MIN_RATING <= rating <= self.MAX_RATING else 1
         self.level: int = self.MIN_LEVEL
-        self.set_name = set_name if set_name in self.POSSIBLE_SET_NAMES else None
-        self.complete_set_size = 4 if self.set_name == "FATAL" or self.set_name == "RAGE" or \
+        self.set_name: str = set_name if set_name in self.POSSIBLE_SET_NAMES else None
+        self.complete_set_size: int = 4 if self.set_name == "FATAL" or self.set_name == "RAGE" or \
                                       self.set_name == "MAGIC" or self.set_name == "SWIFT" or self.set_name == "VIOLENT" or \
                                       self.set_name == "VAMPIRE" else 2
-        self.set_effect = SetEffect(20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
+        self.set_effect: SetEffect = SetEffect(20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
             if self.set_name == "ENERGY" else SetEffect(0, 35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
             if self.set_name == "FATAL" else SetEffect(0, 0, 0, 0, 0, 0, 0, 0.4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
             if self.set_name == "RAGE" else SetEffect(0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) \
@@ -481,16 +494,16 @@ class Rune:
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10) if self.set_name == "TOLERANCE" else SetEffect(0, 0, 0, 0, 0, 0, 0, 0,
                                                                                                 0, 0, 0, 0, 0, 0, 0, 0,
                                                                                                 0, 0, 0, 0)
-        self.prefix_stat = prefix_stat
-        self.main_stat = main_stat
-        self.rune_stat = rune_stat
-        self.rune_upgrades_applied = rune_upgrades_applied
-        self.purchase_coin_cost = purchase_coin_cost
-        self.sell_coin_gain = self.purchase_coin_cost / 5
-        self.level_up_coin_cost = Decimal("10e1") ** (10 * 2 ** (self.rating - 1))
-        self.level_up_success_rate = 1
-        self.set_effect_applied = False
-        self.removal_coin_cost = Decimal("10e1") ** (15 * 2 ** (self.rating - 1))
+        self.prefix_stat: PrefixStat = prefix_stat
+        self.main_stat: MainStat = main_stat
+        self.rune_stat: RuneStat = rune_stat
+        self.rune_upgrades_applied: list = rune_upgrades_applied
+        self.purchase_coin_cost: Decimal = purchase_coin_cost
+        self.sell_coin_gain: Decimal = self.purchase_coin_cost / 5
+        self.level_up_coin_cost: Decimal = Decimal("10e1") ** (10 * 2 ** (self.rating - 1))
+        self.level_up_success_rate: float = 1
+        self.set_effect_applied: bool = False
+        self.removal_coin_cost: Decimal = Decimal("10e1") ** (15 * 2 ** (self.rating - 1))
 
     def to_string(self):
         # type: () -> str
