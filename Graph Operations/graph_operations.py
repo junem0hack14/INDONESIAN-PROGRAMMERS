@@ -89,6 +89,7 @@ class GraphNode(Node):
                     if (curr_link.from_vertex == link.from_vertex and curr_link.to_vertex == link.to_vertex) or \
                             (curr_link.from_vertex == link.to_vertex and curr_link.to_vertex == link.from_vertex):
                         corresponding_link = curr_link
+                        break
 
                 if corresponding_link is not None:
                     to_add: Link = corresponding_link if corresponding_link.weight > link.weight else link
