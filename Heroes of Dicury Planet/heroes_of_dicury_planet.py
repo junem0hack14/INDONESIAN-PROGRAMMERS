@@ -109,6 +109,24 @@ class SecondaryAwakenBonus(AwakenBonus):
         return res
 
 
+class Battle:
+    """
+    This class contains attributes of battles carried out in the game.
+    """
+
+    def __init__(self, team1, team2):
+        # type: (Team, Team) -> None
+        self.team1: Team = team1  # a Team class object
+        self.team2: Team = team2  # a Team class object
+        self.whose_turn: Hero or None = None  # a Hero class object
+        self.winner: Team or None = None  # a Team class object
+        self.is_finished: bool = False
+        self.turn: int = 0
+
+    def clone(self):
+        return copy.deepcopy(self)
+
+
 class Action:
     """
     This class contains attributes of actions in this game.
@@ -596,8 +614,10 @@ class Hero:
         self.runes: dict = {}
         self.secondary_awakening_exp: Decimal = Decimal("0e0")
         self.is_alive: bool = True
+        self.can_move: bool = True
         self.corresponding_team: Team or None = None  # initial value
         self.limit_break_applied: bool = False  # initial value
+        self.strength: Decimal = self.calculate_strength()
 
     def to_string(self) -> str:
         res: str = ""  # initial value
@@ -652,50 +672,186 @@ class Hero:
 
         res += "Secondary awakening EXP: " + str(self.secondary_awakening_exp) + "\n"
         res += "Is it alive? " + str(self.get_is_alive()) + "\n"
+        res += "Can it move? " + str(self.get_can_move()) + "\n"
         res += "Has limit break been applied to this hero? " + str(self.limit_break_applied) + "\n"
+        res += "Strength: " + str(self.calculate_strength()) + "\n"
         return res
 
     def clone(self):
         # type: () -> Hero
         return copy.deepcopy(self)
 
+    def get_can_move(self):
+        self.can_move = True  # initial value
+        for debuff in self.debuffs:
+            if debuff.prevents_turn:
+                self.can_move = False
+
+        return self.can_move
+
+    def calculate_strength(self):
+        self.strength = 5 * Decimal(
+            self.max_hp + self.attack + self.defense + self.max_magic_points + self.max_energy) * \
+                        (1 + 100 * Decimal(self.crit_rate)) * (1 + 100 * Decimal(self.crit_damage)) * (
+                                1 + 100 * Decimal(self.evasion_chance)) * \
+                        (1 + 100 * Decimal(self.resistance)) * (1 + 100 * Decimal(self.accuracy)) * (
+                                1 + 100 * Decimal(self.extra_turn_chance)) * \
+                        (1 + 100 * Decimal(self.counterattack_chance)) * (
+                                1 + 100 * Decimal(self.life_drain_percentage)) * \
+                        (1 + 100 * Decimal(self.reflected_damage_percentage)) * (1 + 100 * Decimal(self.stun_rate))
+        return self.strength
+
     def place_rune(self, slot_number, rune):
         # type: (int, Rune) -> bool
         if slot_number in self.runes.keys():
             self.remove_rune(slot_number)
             self.runes[slot_number] = rune
-            self.max_hp *= Decimal(1 + rune.max_hp_percentage_up / 100)
+            self.max_hp += rune.prefix_stat.max_hp_up
+            self.max_hp *= Decimal(1 + rune.prefix_stat.max_hp_percentage_up/100)
             self.curr_hp = self.max_hp
-            self.attack_power *= Decimal(1 + rune.attack_power_percentage_up / 100)
-            self.defense *= Decimal(1 + rune.defense_percentage_up / 100)
-            self.max_magic_points *= Decimal(1 + rune.max_magic_points_percentage_up / 100)
+            self.attack_power += rune.prefix_stat.attack_up
+            self.attack_power *= Decimal(1 + rune.prefix_stat.attack_percentage_up)
+            self.defense += rune.prefix_stat.defense_up
+            self.defense *= Decimal(1 + rune.prefix_stat.defense_percentage_up)
+            self.attack_speed += rune.prefix_stat.attack_speed_up
+            self.max_magic_points += rune.prefix_stat.max_magic_points_up
+            self.max_magic_points *= Decimal(1 + rune.prefix_stat.max_magic_points_percentage_up)
             self.curr_magic_points = self.max_magic_points
-            self.max_energy *= Decimal(1 + rune.max_energy_percentage_up / 100)
+            self.max_energy += rune.prefix_stat.max_energy_up
+            self.max_energy *= Decimal(1 + rune.prefix_stat.max_energy_percentage_up)
             self.curr_energy = self.max_energy
-            self.crit_rate += rune.crit_rate_up
+            self.crit_rate += rune.prefix_stat.crit_rate_up
             self.crit_rate = self.crit_rate if self.crit_rate <= self.MAX_CRIT_RATE else self.MAX_CRIT_RATE
-            self.crit_damage += rune.crit_damage_up
-            self.resistance += rune.resistance_up
+            self.crit_damage += rune.prefix_stat.crit_damage_up
+            self.evasion_chance += rune.prefix_stat.evasion_chance_up
+            self.evasion_chance = self.evasion_chance if self.evasion_chance <= self.MAX_EVASION_CHANCE \
+                else self.evasion_chance
+            self.resistance += rune.prefix_stat.resistance_up
             self.resistance = self.resistance if self.resistance <= self.MAX_RESISTANCE else self.MAX_RESISTANCE
-            self.accuracy += rune.accuracy_up
+            self.accuracy += rune.prefix_stat.accuracy_up
+            self.accuracy = self.accuracy if self.accuracy <= self.MAX_ACCURACY else self.MAX_ACCURACY
+            self.max_hp += rune.main_stat.max_hp_up
+            self.max_hp *= Decimal(1 + rune.main_stat.max_hp_percentage_up / 100)
+            self.curr_hp = self.max_hp
+            self.attack_power += rune.main_stat.attack_up
+            self.attack_power *= Decimal(1 + rune.main_stat.attack_percentage_up)
+            self.defense += rune.main_stat.defense_up
+            self.defense *= Decimal(1 + rune.main_stat.defense_percentage_up)
+            self.attack_speed += rune.main_stat.attack_speed_up
+            self.max_magic_points += rune.main_stat.max_magic_points_up
+            self.max_magic_points *= Decimal(1 + rune.main_stat.max_magic_points_percentage_up)
+            self.curr_magic_points = self.max_magic_points
+            self.max_energy += rune.main_stat.max_energy_up
+            self.max_energy *= Decimal(1 + rune.main_stat.max_energy_percentage_up)
+            self.curr_energy = self.max_energy
+            self.crit_rate += rune.main_stat.crit_rate_up
+            self.crit_rate = self.crit_rate if self.crit_rate <= self.MAX_CRIT_RATE else self.MAX_CRIT_RATE
+            self.crit_damage += rune.main_stat.crit_damage_up
+            self.evasion_chance += rune.main_stat.evasion_chance_up
+            self.evasion_chance = self.evasion_chance if self.evasion_chance <= self.MAX_EVASION_CHANCE \
+                else self.evasion_chance
+            self.resistance += rune.main_stat.resistance_up
+            self.resistance = self.resistance if self.resistance <= self.MAX_RESISTANCE else self.MAX_RESISTANCE
+            self.accuracy += rune.main_stat.accuracy_up
+            self.accuracy = self.accuracy if self.accuracy <= self.MAX_ACCURACY else self.MAX_ACCURACY
+            self.max_hp += rune.rune_stat.max_hp_up
+            self.max_hp *= Decimal(1 + rune.rune_stat.max_hp_percentage_up / 100)
+            self.curr_hp = self.max_hp
+            self.attack_power += rune.rune_stat.attack_up
+            self.attack_power *= Decimal(1 + rune.rune_stat.attack_percentage_up)
+            self.defense += rune.rune_stat.defense_up
+            self.defense *= Decimal(1 + rune.rune_stat.defense_percentage_up)
+            self.attack_speed += rune.rune_stat.attack_speed_up
+            self.max_magic_points += rune.rune_stat.max_magic_points_up
+            self.max_magic_points *= Decimal(1 + rune.rune_stat.max_magic_points_percentage_up)
+            self.curr_magic_points = self.max_magic_points
+            self.max_energy += rune.rune_stat.max_energy_up
+            self.max_energy *= Decimal(1 + rune.rune_stat.max_energy_percentage_up)
+            self.curr_energy = self.max_energy
+            self.crit_rate += rune.rune_stat.crit_rate_up
+            self.crit_rate = self.crit_rate if self.crit_rate <= self.MAX_CRIT_RATE else self.MAX_CRIT_RATE
+            self.crit_damage += rune.rune_stat.crit_damage_up
+            self.evasion_chance += rune.rune_stat.evasion_chance_up
+            self.evasion_chance = self.evasion_chance if self.evasion_chance <= self.MAX_EVASION_CHANCE \
+                else self.evasion_chance
+            self.resistance += rune.rune_stat.resistance_up
+            self.resistance = self.resistance if self.resistance <= self.MAX_RESISTANCE else self.MAX_RESISTANCE
+            self.accuracy += rune.rune_stat.accuracy_up
             self.accuracy = self.accuracy if self.accuracy <= self.MAX_ACCURACY else self.MAX_ACCURACY
             return True
         else:
             self.runes[slot_number] = rune
-            self.max_hp *= Decimal(1 + rune.max_hp_percentage_up / 100)
+            self.max_hp += rune.prefix_stat.max_hp_up
+            self.max_hp *= Decimal(1 + rune.prefix_stat.max_hp_percentage_up / 100)
             self.curr_hp = self.max_hp
-            self.attack_power *= Decimal(1 + rune.attack_power_percentage_up / 100)
-            self.defense *= Decimal(1 + rune.defense_percentage_up / 100)
-            self.max_magic_points *= Decimal(1 + rune.max_magic_points_percentage_up / 100)
+            self.attack_power += rune.prefix_stat.attack_up
+            self.attack_power *= Decimal(1 + rune.prefix_stat.attack_percentage_up)
+            self.defense += rune.prefix_stat.defense_up
+            self.defense *= Decimal(1 + rune.prefix_stat.defense_percentage_up)
+            self.attack_speed += rune.prefix_stat.attack_speed_up
+            self.max_magic_points += rune.prefix_stat.max_magic_points_up
+            self.max_magic_points *= Decimal(1 + rune.prefix_stat.max_magic_points_percentage_up)
             self.curr_magic_points = self.max_magic_points
-            self.max_energy *= Decimal(1 + rune.max_energy_percentage_up / 100)
+            self.max_energy += rune.prefix_stat.max_energy_up
+            self.max_energy *= Decimal(1 + rune.prefix_stat.max_energy_percentage_up)
             self.curr_energy = self.max_energy
-            self.crit_rate += rune.crit_rate_up
+            self.crit_rate += rune.prefix_stat.crit_rate_up
             self.crit_rate = self.crit_rate if self.crit_rate <= self.MAX_CRIT_RATE else self.MAX_CRIT_RATE
-            self.crit_damage += rune.crit_damage_up
-            self.resistance += rune.resistance_up
+            self.crit_damage += rune.prefix_stat.crit_damage_up
+            self.evasion_chance += rune.prefix_stat.evasion_chance_up
+            self.evasion_chance = self.evasion_chance if self.evasion_chance <= self.MAX_EVASION_CHANCE \
+                else self.evasion_chance
+            self.resistance += rune.prefix_stat.resistance_up
             self.resistance = self.resistance if self.resistance <= self.MAX_RESISTANCE else self.MAX_RESISTANCE
-            self.accuracy += rune.accuracy_up
+            self.accuracy += rune.prefix_stat.accuracy_up
+            self.accuracy = self.accuracy if self.accuracy <= self.MAX_ACCURACY else self.MAX_ACCURACY
+            self.max_hp += rune.main_stat.max_hp_up
+            self.max_hp *= Decimal(1 + rune.main_stat.max_hp_percentage_up / 100)
+            self.curr_hp = self.max_hp
+            self.attack_power += rune.main_stat.attack_up
+            self.attack_power *= Decimal(1 + rune.main_stat.attack_percentage_up)
+            self.defense += rune.main_stat.defense_up
+            self.defense *= Decimal(1 + rune.main_stat.defense_percentage_up)
+            self.attack_speed += rune.main_stat.attack_speed_up
+            self.max_magic_points += rune.main_stat.max_magic_points_up
+            self.max_magic_points *= Decimal(1 + rune.main_stat.max_magic_points_percentage_up)
+            self.curr_magic_points = self.max_magic_points
+            self.max_energy += rune.main_stat.max_energy_up
+            self.max_energy *= Decimal(1 + rune.main_stat.max_energy_percentage_up)
+            self.curr_energy = self.max_energy
+            self.crit_rate += rune.main_stat.crit_rate_up
+            self.crit_rate = self.crit_rate if self.crit_rate <= self.MAX_CRIT_RATE else self.MAX_CRIT_RATE
+            self.crit_damage += rune.main_stat.crit_damage_up
+            self.evasion_chance += rune.main_stat.evasion_chance_up
+            self.evasion_chance = self.evasion_chance if self.evasion_chance <= self.MAX_EVASION_CHANCE \
+                else self.evasion_chance
+            self.resistance += rune.main_stat.resistance_up
+            self.resistance = self.resistance if self.resistance <= self.MAX_RESISTANCE else self.MAX_RESISTANCE
+            self.accuracy += rune.main_stat.accuracy_up
+            self.accuracy = self.accuracy if self.accuracy <= self.MAX_ACCURACY else self.MAX_ACCURACY
+            self.max_hp += rune.rune_stat.max_hp_up
+            self.max_hp *= Decimal(1 + rune.rune_stat.max_hp_percentage_up / 100)
+            self.curr_hp = self.max_hp
+            self.attack_power += rune.rune_stat.attack_up
+            self.attack_power *= Decimal(1 + rune.rune_stat.attack_percentage_up)
+            self.defense += rune.rune_stat.defense_up
+            self.defense *= Decimal(1 + rune.rune_stat.defense_percentage_up)
+            self.attack_speed += rune.rune_stat.attack_speed_up
+            self.max_magic_points += rune.rune_stat.max_magic_points_up
+            self.max_magic_points *= Decimal(1 + rune.rune_stat.max_magic_points_percentage_up)
+            self.curr_magic_points = self.max_magic_points
+            self.max_energy += rune.rune_stat.max_energy_up
+            self.max_energy *= Decimal(1 + rune.rune_stat.max_energy_percentage_up)
+            self.curr_energy = self.max_energy
+            self.crit_rate += rune.rune_stat.crit_rate_up
+            self.crit_rate = self.crit_rate if self.crit_rate <= self.MAX_CRIT_RATE else self.MAX_CRIT_RATE
+            self.crit_damage += rune.rune_stat.crit_damage_up
+            self.evasion_chance += rune.rune_stat.evasion_chance_up
+            self.evasion_chance = self.evasion_chance if self.evasion_chance <= self.MAX_EVASION_CHANCE \
+                else self.evasion_chance
+            self.resistance += rune.rune_stat.resistance_up
+            self.resistance = self.resistance if self.resistance <= self.MAX_RESISTANCE else self.MAX_RESISTANCE
+            self.accuracy += rune.rune_stat.accuracy_up
             self.accuracy = self.accuracy if self.accuracy <= self.MAX_ACCURACY else self.MAX_ACCURACY
             return True
 
@@ -703,21 +859,78 @@ class Hero:
         # type: (int) -> bool
         if slot_number in self.runes.keys():
             removed_rune: Rune = self.runes.pop(slot_number)
-            self.max_hp /= Decimal(1 + removed_rune.max_hp_percentage_up / 100)
+            self.max_hp -= removed_rune.prefix_stat.max_hp_up
+            self.max_hp /= Decimal(1 + removed_rune.prefix_stat.max_hp_percentage_up / 100)
             self.curr_hp = self.max_hp
-            self.attack_power /= Decimal(1 + removed_rune.attack_power_percentage_up / 100)
-            self.defense /= Decimal(1 + removed_rune.defense_percentage_up / 100)
-            self.max_magic_points /= Decimal(1 + removed_rune.max_magic_points_percentage_up / 100)
+            self.attack_power -= removed_rune.prefix_stat.attack_up
+            self.attack_power /= Decimal(1 + removed_rune.prefix_stat.attack_percentage_up)
+            self.defense -= removed_rune.prefix_stat.defense_up
+            self.defense /= Decimal(1 + removed_rune.prefix_stat.defense_percentage_up)
+            self.attack_speed -= removed_rune.prefix_stat.attack_speed_up
+            self.max_magic_points -= removed_rune.prefix_stat.max_magic_points_up
+            self.max_magic_points /= Decimal(1 + removed_rune.prefix_stat.max_magic_points_percentage_up)
             self.curr_magic_points = self.max_magic_points
-            self.max_energy /= Decimal(1 + removed_rune.max_energy_percentage_up / 100)
+            self.max_energy -= removed_rune.prefix_stat.max_energy_up
+            self.max_energy /= Decimal(1 + removed_rune.prefix_stat.max_energy_percentage_up)
             self.curr_energy = self.max_energy
-            self.crit_rate -= removed_rune.crit_rate_up
-            self.crit_rate = self.crit_rate if self.crit_rate >= self.MIN_CRIT_RATE else self.MIN_CRIT_RATE
-            self.crit_damage -= removed_rune.crit_damage_up
-            self.resistance -= removed_rune.resistance_up
-            self.resistance = self.resistance if self.resistance >= self.MIN_RESISTANCE else self.MIN_RESISTANCE
-            self.accuracy -= removed_rune.accuracy_up
-            self.accuracy = self.accuracy if self.accuracy <= self.MIN_ACCURACY else self.MIN_ACCURACY
+            self.crit_rate -= removed_rune.prefix_stat.crit_rate_up
+            self.crit_rate = self.crit_rate if self.crit_rate <= self.MAX_CRIT_RATE else self.MAX_CRIT_RATE
+            self.crit_damage -= removed_rune.prefix_stat.crit_damage_up
+            self.evasion_chance -= removed_rune.prefix_stat.evasion_chance_up
+            self.evasion_chance = self.evasion_chance if self.evasion_chance <= self.MAX_EVASION_CHANCE \
+                else self.evasion_chance
+            self.resistance -= removed_rune.prefix_stat.resistance_up
+            self.resistance = self.resistance if self.resistance <= self.MAX_RESISTANCE else self.MAX_RESISTANCE
+            self.accuracy -= removed_rune.prefix_stat.accuracy_up
+            self.accuracy = self.accuracy if self.accuracy <= self.MAX_ACCURACY else self.MAX_ACCURACY
+            self.max_hp -= removed_rune.main_stat.max_hp_up
+            self.max_hp /= Decimal(1 + removed_rune.main_stat.max_hp_percentage_up / 100)
+            self.curr_hp = self.max_hp
+            self.attack_power -= removed_rune.main_stat.attack_up
+            self.attack_power /= Decimal(1 + removed_rune.main_stat.attack_percentage_up)
+            self.defense -= removed_rune.main_stat.defense_up
+            self.defense /= Decimal(1 + removed_rune.main_stat.defense_percentage_up)
+            self.attack_speed -= removed_rune.main_stat.attack_speed_up
+            self.max_magic_points -= removed_rune.main_stat.max_magic_points_up
+            self.max_magic_points /= Decimal(1 + removed_rune.main_stat.max_magic_points_percentage_up)
+            self.curr_magic_points = self.max_magic_points
+            self.max_energy -= removed_rune.main_stat.max_energy_up
+            self.max_energy /= Decimal(1 + removed_rune.main_stat.max_energy_percentage_up)
+            self.curr_energy = self.max_energy
+            self.crit_rate -= removed_rune.main_stat.crit_rate_up
+            self.crit_rate = self.crit_rate if self.crit_rate <= self.MAX_CRIT_RATE else self.MAX_CRIT_RATE
+            self.crit_damage -= removed_rune.main_stat.crit_damage_up
+            self.evasion_chance -= removed_rune.main_stat.evasion_chance_up
+            self.evasion_chance = self.evasion_chance if self.evasion_chance <= self.MAX_EVASION_CHANCE \
+                else self.evasion_chance
+            self.resistance -= removed_rune.main_stat.resistance_up
+            self.resistance = self.resistance if self.resistance <= self.MAX_RESISTANCE else self.MAX_RESISTANCE
+            self.accuracy -= removed_rune.main_stat.accuracy_up
+            self.accuracy = self.accuracy if self.accuracy <= self.MAX_ACCURACY else self.MAX_ACCURACY
+            self.max_hp -= removed_rune.rune_stat.max_hp_up
+            self.max_hp /= Decimal(1 + removed_rune.rune_stat.max_hp_percentage_up / 100)
+            self.curr_hp = self.max_hp
+            self.attack_power -= removed_rune.rune_stat.attack_up
+            self.attack_power /= Decimal(1 + removed_rune.rune_stat.attack_percentage_up)
+            self.defense -= removed_rune.rune_stat.defense_up
+            self.defense /= Decimal(1 + removed_rune.rune_stat.defense_percentage_up)
+            self.attack_speed -= removed_rune.rune_stat.attack_speed_up
+            self.max_magic_points -= removed_rune.rune_stat.max_magic_points_up
+            self.max_magic_points /= Decimal(1 + removed_rune.rune_stat.max_magic_points_percentage_up)
+            self.curr_magic_points = self.max_magic_points
+            self.max_energy -= removed_rune.rune_stat.max_energy_up
+            self.max_energy /= Decimal(1 + removed_rune.rune_stat.max_energy_percentage_up)
+            self.curr_energy = self.max_energy
+            self.crit_rate -= removed_rune.rune_stat.crit_rate_up
+            self.crit_rate = self.crit_rate if self.crit_rate <= self.MAX_CRIT_RATE else self.MAX_CRIT_RATE
+            self.crit_damage -= removed_rune.rune_stat.crit_damage_up
+            self.evasion_chance -= removed_rune.rune_stat.evasion_chance_up
+            self.evasion_chance = self.evasion_chance if self.evasion_chance <= self.MAX_EVASION_CHANCE \
+                else self.evasion_chance
+            self.resistance -= removed_rune.rune_stat.resistance_up
+            self.resistance = self.resistance if self.resistance <= self.MAX_RESISTANCE else self.MAX_RESISTANCE
+            self.accuracy -= removed_rune.rune_stat.accuracy_up
+            self.accuracy = self.accuracy if self.accuracy <= self.MAX_ACCURACY else self.MAX_ACCURACY
             return True
         return False
 
@@ -863,34 +1076,17 @@ class Skill:
     This class contains attributes of skills that a hero has.
     """
 
-    def __init__(self, name, does_heal, does_attack, heal_amount, damage_multiplier, buffs_to_allies,
-                 debuffs_to_enemies, magic_points_cost, energy_cost):
-        # type: (str, bool, bool, Decimal, float, list, list, Decimal, Decimal) -> None
+    def __init__(self, skill_id, name, description):
+        # type: (str, str, str) -> None
+        self.skill_id: str = skill_id
         self.name: str = name
-        self.does_heal: bool = does_heal
-        self.does_attack: bool = does_attack
-        self.heal_amount: Decimal = heal_amount if self.does_heal else 0
-        self.damage_multiplier: float = damage_multiplier if self.does_attack else 0
-        self.buffs_to_allies: list = buffs_to_allies
-        self.debuffs_to_enemies: list = debuffs_to_enemies
-        self.magic_points_cost: Decimal = magic_points_cost
-        self.energy_cost: Decimal = energy_cost
+        self.description: str = description
 
     def to_string(self) -> str:
         res: str = ""  # initial value
+        res += "Skill ID: " + str(self.skill_id) + "\n"
         res += "Name: " + str(self.name) + "\n"
-        res += "Does it heal? " + str(self.does_heal) + "\n"
-        res += "Does it attack? " + str(self.does_attack) + "\n"
-        res += "Heal amount: " + str(self.heal_amount) + "\n"
-        res += "Damage multiplier: " + str(self.damage_multiplier) + "\n"
-        res += "Below is a list of buffs that the skill gives to allies.\n"
-        for buff in self.buffs_to_allies:
-            res += str(buff.to_string()) + "\n"
-
-        res += "Below is a list of debuffs that the skill gives to enemies.\n"
-        for debuff in self.debuffs_to_enemies:
-            res += str(debuff.to_string()) + "\n"
-
+        res += "Description: " + str(self.description) + "\n"
         return res
 
     def clone(self):
@@ -898,26 +1094,227 @@ class Skill:
         return copy.deepcopy(self)
 
 
+class ActiveSkill(Skill):
+    """
+    This class is used to initialise active skills that characters have.
+    """
+
+    def __init__(self, skill_id, name, description, max_level, does_attack, does_heal_self, does_heal_allies,
+                 does_revive_self, does_revive_allies, does_remove_self_debuffs, does_remove_allies_debuffs,
+                 does_remove_enemies_buffs, does_increase_self_attack_gauge, does_increase_allies_attack_gauge,
+                 does_decrease_enemies_attack_gauge, does_ignore_enemies_defense, is_aoe, heal_amount_to_self,
+                 heal_amount_to_allies, revival_amount_to_self, revival_amount_to_allies,
+                 attack_gauge_increase_to_self, attack_gauge_increase_to_allies, attack_gauge_decrease_to_enemies,
+                 does_decrease_allies_skill_cooltime, does_increase_enemies_skill_cooltime, buffs_to_self,
+                 buffs_to_allies, debuffs_to_enemies, magic_points_cost, energy_cost, damage_multiplier_to_self_max_hp,
+                 damage_multiplier_to_enemies_max_hp, damage_multiplier_to_self_attack,
+                 damage_multiplier_to_self_defense, damage_multiplier_to_self_attack_speed,
+                 damage_multiplier_to_number_of_dead_allies, damage_multiplier_to_number_of_dead_enemies,
+                 damage_multiplier_to_number_of_debuffs_on_enemies, damage_percentage_up_on_enemies_without_buffs,
+                 damage_percentage_up_per_self_hp_percentage_loss, damage_percentage_up_per_self_current_hp_percentage,
+                 damage_percentage_up_per_enemies_hp_percentage_loss,
+                 damage_percentage_up_per_enemies_current_hp_percentage, max_cooltime, skill_level_up_bonus):
+        # type: (str, str, str, int, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, Decimal, Decimal, Decimal, Decimal, float, float, float, bool, bool, list, list, list, Decimal, Decimal, float, float, float, float, float, float, float, float, float, float, float, float, float, int, SkillLevelUpBonus) -> None
+        Skill.__init__(self, skill_id, name, description)
+        self.level: int = 1
+        self.max_level: int = max_level
+        self.does_attack: bool = does_attack
+        self.does_heal_self: bool = does_heal_self
+        self.does_heal_allies: bool = does_heal_allies
+        self.does_revive_self: bool = does_revive_self
+        self.does_revive_allies: bool = does_revive_allies
+        self.does_remove_self_debuffs: bool = does_remove_self_debuffs
+        self.does_remove_allies_debuffs: bool = does_remove_allies_debuffs
+        self.does_remove_enemies_buffs: bool = does_remove_enemies_buffs
+        self.does_increase_self_attack_gauge: bool = does_increase_self_attack_gauge
+        self.does_increase_allies_attack_gauge: bool = does_increase_allies_attack_gauge
+        self.does_decrease_enemies_attack_gauge: bool = does_decrease_enemies_attack_gauge
+        self.does_ignore_enemies_defense: bool = does_ignore_enemies_defense
+        self.is_aoe: bool = is_aoe
+        self.heal_amount_to_self: Decimal = heal_amount_to_self
+        self.heal_amount_to_allies: Decimal = heal_amount_to_allies
+        self.revival_amount_to_self: Decimal = revival_amount_to_self
+        self.revival_amount_to_allies: Decimal = revival_amount_to_allies
+        self.attack_gauge_increase_to_self: float = attack_gauge_increase_to_self
+        self.attack_gauge_increase_to_allies: float = attack_gauge_increase_to_allies
+        self.attack_gauge_decrease_to_enemies: float = attack_gauge_decrease_to_enemies
+        self.does_decrease_allies_skill_cooltime: float = does_decrease_allies_skill_cooltime
+        self.does_increase_enemies_skill_cooltime: float = does_increase_enemies_skill_cooltime
+        self.buffs_to_self: list = buffs_to_self  # a list of Buff class objects
+        self.buffs_to_allies: list = buffs_to_allies  # a list of Buff class objects
+        self.debuffs_to_enemies: list = debuffs_to_enemies  # a list of Debuff class objects
+        self.magic_points_cost: Decimal = magic_points_cost
+        self.energy_cost: Decimal = energy_cost
+        self.damage_multiplier_to_self_max_hp: float = damage_multiplier_to_self_max_hp
+        self.damage_multiplier_to_enemies_max_hp: float = damage_multiplier_to_enemies_max_hp
+        self.damage_multiplier_to_self_attack: float = damage_multiplier_to_self_attack
+        self.damage_multiplier_to_self_defense: float = damage_multiplier_to_self_defense
+        self.damage_multiplier_to_self_attack_speed: float = damage_multiplier_to_self_attack_speed
+        self.damage_multiplier_to_number_of_dead_allies: float = damage_multiplier_to_number_of_dead_allies
+        self.damage_multiplier_to_number_of_dead_enemies: float = damage_multiplier_to_number_of_dead_enemies
+        self.damage_multiplier_to_number_of_debuffs_on_enemies: float = damage_multiplier_to_number_of_debuffs_on_enemies
+        self.damage_percentage_up_on_enemies_without_buffs: float = damage_percentage_up_on_enemies_without_buffs
+        self.damage_percentage_up_per_self_hp_percentage_loss: float = damage_percentage_up_per_self_hp_percentage_loss
+        self.damage_percentage_up_per_self_current_hp_percentage: float = damage_percentage_up_per_self_current_hp_percentage
+        self.damage_percentage_up_per_enemies_hp_percentage_loss: float = damage_percentage_up_per_enemies_hp_percentage_loss
+        self.damage_percentage_up_per_enemies_current_hp_percentage: float = \
+            damage_percentage_up_per_enemies_current_hp_percentage
+        self.cooltime: int = max_cooltime
+        self.max_cooltime: int = max_cooltime
+        self.skill_level_up_bonus: SkillLevelUpBonus = skill_level_up_bonus  # a SkillLevelUpBonus class object
+        self.is_activated: bool = True
+
+
+class LeaderSkill(Skill):
+    """
+    This class contains attributes of leader skills that characters have.
+    """
+
+    def __init__(self, skill_id, name, description, max_hp_percentage_up, attack_percentage_up, defense_percentage_up,
+                 attack_speed_percentage_up, max_magic_points_percentage_up, max_energy_percentage_up,
+                 crit_rate_up, crit_damage_up, evasion_chance_up, resistance_up, accuracy_up):
+        # type: (str, str, str, float, float, float, float, float, float, float, float, float, float, float) -> None
+        Skill.__init__(self, skill_id, name, description)
+        self.max_hp_percentage_up: float = max_hp_percentage_up
+        self.attack_percentage_up: float = attack_percentage_up
+        self.defense_percentage_up: float = defense_percentage_up
+        self.attack_speed_percentage_up: float = attack_speed_percentage_up
+        self.max_magic_points_percentage_up: float = max_magic_points_percentage_up
+        self.max_energy_percentage_up: float = max_energy_percentage_up
+        self.crit_rate_up: float = crit_rate_up
+        self.crit_damage_up: float = crit_damage_up
+        self.evasion_chance_up: float = evasion_chance_up
+        self.resistance_up: float = resistance_up
+        self.accuracy_up: float = accuracy_up
+
+
+class PassiveSkill(Skill):
+    """
+    This class is used to initialise passive skills that characters have.
+    """
+
+    def __init__(self, skill_id, name, description, max_hp_percentage_up, attack_percentage_up, defense_percentage_up,
+                 attack_speed_percentage_up, crit_rate_up, crit_damage_up, resistance_up, accuracy_up,
+                 extra_turn_chance_up, counterattack_chance_up, damage_multiplier_to_number_of_dead_allies,
+                 damage_multiplier_to_number_of_dead_enemies, damage_multiplier_to_number_of_debuffs_on_enemies,
+                 damage_percentage_up_on_enemies_without_buffs, damage_percentage_up_per_self_hp_percentage_loss,
+                 damage_percentage_up_per_self_current_hp_percentage,
+                 damage_percentage_up_per_enemies_hp_percentage_loss,
+                 damage_percentage_up_per_enemies_current_hp_percentage, attack_gauge_increase_to_self,
+                 attack_gauge_increase_to_allies, attack_gauge_decrease_to_enemies, buffs_to_self,
+                 buffs_to_allies, debuffs_to_enemies, special_effects):
+        # type: (str, str, str, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, list, list, list, list) -> None
+        Skill.__init__(self, skill_id, name, description)
+        self.max_hp_percentage_up: float = max_hp_percentage_up
+        self.attack_percentage_up: float = attack_percentage_up
+        self.defense_percentage_up: float = defense_percentage_up
+        self.attack_speed_percentage_up: float = attack_speed_percentage_up
+        self.crit_rate_up: float = crit_rate_up
+        self.crit_damage_up: float = crit_damage_up
+        self.resistance_up: float = resistance_up
+        self.accuracy_up: float = accuracy_up
+        self.extra_turn_chance_up: float = extra_turn_chance_up
+        self.counterattack_chance_up: float = counterattack_chance_up
+        self.damage_multiplier_to_number_of_dead_allies: float = damage_multiplier_to_number_of_dead_allies
+        self.damage_multiplier_to_number_of_dead_enemies: float = damage_multiplier_to_number_of_dead_enemies
+        self.damage_multiplier_to_number_of_debuffs_on_enemies: float = damage_multiplier_to_number_of_debuffs_on_enemies
+        self.damage_percentage_up_on_enemies_without_buffs: float = damage_percentage_up_on_enemies_without_buffs
+        self.damage_percentage_up_per_self_hp_percentage_loss: float = damage_percentage_up_per_self_hp_percentage_loss
+        self.damage_percentage_up_per_self_current_hp_percentage: float = damage_percentage_up_per_self_current_hp_percentage
+        self.damage_percentage_up_per_enemies_hp_percentage_loss: float = damage_percentage_up_per_enemies_hp_percentage_loss
+        self.damage_percentage_up_per_enemies_current_hp_percentage: float = \
+            damage_percentage_up_per_enemies_current_hp_percentage
+        self.attack_gauge_increase_to_self: float = attack_gauge_increase_to_self
+        self.attack_gauge_increase_to_allies: float = attack_gauge_increase_to_allies
+        self.attack_gauge_decrease_to_enemies: float = attack_gauge_decrease_to_enemies
+        self.buffs_to_self: list = buffs_to_self  # a list of Buff class objects
+        self.buffs_to_allies: list = buffs_to_allies  # a list of Buff class objects
+        self.debuffs_to_enemies: list = debuffs_to_enemies  # a list of Debuff class objects
+        self.special_effects: list = special_effects  # a list of SpecialEffect class objects
+        self.is_activated: bool = True
+
+
+class SkillLevelUpBonus:
+    """
+    This class contains attributes of levelling up skills.
+    """
+
+    def __init__(self, damage_percentage_up, heal_amount_percentage_up, revival_amount_percentage_up,
+                 magic_points_cost_percentage_down, energy_cost_percentage_down, max_cooltime_down):
+        # type: (float, float, float, float, float, float) -> None
+        self.damage_percentage_up: float = damage_percentage_up
+        self.heal_amount_percentage_up: float = heal_amount_percentage_up
+        self.revival_amount_percentage_up: float= revival_amount_percentage_up
+        self.magic_points_cost_percentage_down: float = magic_points_cost_percentage_down
+        self.energy_cost_percentage_down: float = energy_cost_percentage_down
+        self.max_cooltime_down: float = max_cooltime_down
+
+    def clone(self):
+        # type: () -> SkillLevelUpBonus
+        return copy.deepcopy(self)
+
+
+class SpecialEffect:
+    """
+    This class is used to initialise special effects that passive skills have.
+    """
+
+    def __init__(self, attack_percentage_up, defense_percentage_up, attack_speed_percentage_up, damage_percentage_up,
+                 times_accumulated, max_times_accumulated):
+        # type: (float, float, float, float, int, int) -> None
+        self.attack_percentage_up: float = attack_percentage_up
+        self.defense_percentage_up: float = defense_percentage_up
+        self.attack_speed_percentage_up: float = attack_speed_percentage_up
+        self.damage_percentage_up: float = damage_percentage_up
+        self.times_accumulated: int = times_accumulated
+        self.max_times_accumulated: int = max_times_accumulated
+
+    def clone(self):
+        # type: () -> SpecialEffect
+        return copy.deepcopy(self)
+
+
 class Buff:
     """
     This class contains attributes of beneficial effects.
     """
-    POSSIBLE_NAMES = ["ATTACK_UP", "DEFENSE_UP"]
+    POSSIBLE_NAMES = ["INCREASE_ATK", "INCREASE_DEF", "INCREASE_SPD", "INCREASE_CR", "IMMUNITY", "INVINCIBILITY",
+                           "ENDURE", "RECOVERY", "COUNTER", "REFLECT", "VAMPIRE"]
 
-    def __init__(self, name, duration):
-        # type: (str, int) -> None
+    def __init__(self, name, description, duration):
+        # type: (str, str, int) -> None
         self.name: str or None = name if name in self.POSSIBLE_NAMES else None
-        self.attack_percentage_up: float = 50 if self.name == "ATTACK_UP" else 0
-        self.defense_percentage_up: float = 50 if self.name == "DEFENSE_UP" else 0
+        self.description: str = description
+        self.blocks_damage: bool = self.name == "INVINCIBILITY"
+        self.blocks_debuffs: bool = self.name == "IMMUNITY"
+        self.prevents_death: bool = self.name == "ENDURE"
+        self.heal_percentage_per_turn: float = 15 if self.name == "RECOVERY" else 0
+        self.attack_percentage_up: float = 50 if self.name == "INCREASE_ATK" else 0
+        self.defense_percentage_up: float = 50 if self.name == "INCREASE_DEF" else 0
+        self.attack_speed_percentage_up: float = 100 / 3 if self.name == "INCREASE_SPD" else 0
+        self.crit_rate_up: float = 1 / 3 if self.name == "INCREASE_CR" else 0
+        self.counterattack_chance_up: float = 1 if self.name == "COUNTER" else 0
+        self.life_drain_percentage_up: float = 15 if self.name == "VAMPIRE" else 0
+        self.reflected_damage_percentage_up: float = 100 / 3 if self.name == "REFLECT" else 0
         self.duration: int = duration
-        self.is_stackable: bool = False
+        self.is_stackable: bool = self.name == "RECOVERY"
 
     def to_string(self):
         # type: () -> str
         res: str = ""  # initial value
         res += "Name: " + str(self.name) + "\n"
+        res += "Description: " + str(self.description) + "\n"
+        res += "Does it block damage? " + str(self.blocks_damage) + "\n"
+        res += "Does it block debuffs? " + str(self.blocks_debuffs) + "\n"
+        res += "Does it prevent death? " + str(self.prevents_death) + "\n"
+        res += "Heal percentage per turn: " + str(self.heal_percentage_per_turn) + "%\n"
         res += "Attack percentage up: " + str(self.attack_percentage_up) + "%\n"
         res += "Defense percentage up: " + str(self.defense_percentage_up) + "%\n"
+        res += "Attack speed percentage up: " + str(self.attack_speed_percentage_up) + "%\n"
+        res += "Crit rate up: " + str(self.crit_rate_up) + "\n"
+        res += "Counterattack chance up: " + str(self.counterattack_chance_up) + "\n"
+        res += "Life drain percentage up: " + str(self.life_drain_percentage_up) + "%\n"
+        res += "Reflected damage percentage up: " + str(self.reflected_damage_percentage_up) + "%\n"
         res += "Duration: " + str(self.duration) + " turns\n"
         res += "Is it stackable? " + str(self.is_stackable) + "\n"
         return res
@@ -931,13 +1328,25 @@ class Debuff:
     """
         This class contains attributes of harmful effects.
         """
-    POSSIBLE_NAMES = ["ATTACK_DOWN", "DEFENSE_DOWN"]
+    POSSIBLE_NAMES = ["DECREASE_ATK", "DECREASE_DEF", "DECREASE_SPD", "GLANCING", "BLOCK_BENEFICIAL_EFFECTS",
+                             "BRAND", "UNRECOVERABLE", "DAMAGE_OVER_TIME", "FREEZE", "STUN", "SLEEP", "SILENCE",
+                             "OBLIVION"]
 
-    def __init__(self, name, duration):
-        # type: (str, int) -> None
+    def __init__(self, name, description, duration):
+        # type: (str, str, int) -> None
         self.name: str or None = name if name in self.POSSIBLE_NAMES else None
-        self.attack_percentage_down: float = 50 if self.name == "ATTACK_DOWN" else 0
-        self.defense_percentage_down: float = 50 if self.name == "DEFENSE_DOWN" else 0
+        self.description: str = description
+        self.blocks_heal: bool = self.name == "UNRECOVERABLE"
+        self.blocks_buffs: bool = self.name == "BLOCK_BENEFICIAL_EFFECTS"
+        self.prevents_turn: bool = self.name == "FREEZE" or self.name == "STUN" or self.name == "SLEEP"
+        self.silences_skills: bool = self.name == "SILENCE"
+        self.blocks_passive_skills: bool = self.name == "OBLIVION"
+        self.damage_percentage_per_turn: float = 5 if self.name == "DAMAGE_OVER_TIME" else 0
+        self.attack_percentage_down: float = 50 if self.name == "DECREASE_ATK" else 0
+        self.defense_percentage_down: float = 50 if self.name == "DECREASE_DEF" else 0
+        self.attack_speed_percentage_down: float = 100 / 3 if self.name == "DECREASE_SPD" else 0
+        self.glancing_hit_chance_up: float = 0.5 if self.name == "GLANCING" else 0
+        self.additional_damage_percentage_received_up: float = 25 if self.name == "BRAND" else 0
         self.duration: int = duration
         self.is_stackable: bool = False
 
@@ -945,8 +1354,18 @@ class Debuff:
         # type: () -> str
         res: str = ""  # initial value
         res += "Name: " + str(self.name) + "\n"
+        res += "Description: " + str(self.description) + "\n"
+        res += "Does it block heal? " + str(self.blocks_heal) + "\n"
+        res += "Does it block buffs? " + str(self.blocks_buffs) + "\n"
+        res += "Does it prevent turn? " + str(self.prevents_turn) + "\n"
+        res += "Does it silence skills? " + str(self.silences_skills) + "\n"
+        res += "Does it block passive skills? " + str(self.blocks_passive_skills) + "\n"
+        res += "Damage percentage per turn: " + str(self.damage_percentage_per_turn) + "%\n"
         res += "Attack percentage down: " + str(self.attack_percentage_down) + "%\n"
         res += "Defense percentage down: " + str(self.defense_percentage_down) + "%\n"
+        res += "Attack speed percentage down: " + str(self.attack_speed_percentage_down) + "%\n"
+        res += "Glancing hit chance up: " + str(self.glancing_hit_chance_up) + "\n"
+        res += "Additional damage percentage received up: " + str(self.additional_damage_percentage_received_up) + "%\n"
         res += "Duration: " + str(self.duration) + " turns\n"
         res += "Is it stackable? " + str(self.is_stackable) + "\n"
         return res
@@ -960,7 +1379,7 @@ class Team:
     """
     This class contains attributes of teams brought to battles.
     """
-    MAX_TEAM_SIZE = 5
+    MAX_TEAM_SIZE = 20
 
     def __init__(self):
         # type: () -> None
@@ -999,6 +1418,15 @@ def main():
     This function is used to run the program.
     :return:
     """
+
+    to_be_printed = str(calendar.day_name[today.weekday()]) + ", " + str(today.day) + " "
+    month = "January " if today.month == 1 else "February " if today.month == 2 else "March " \
+        if today.month == 3 else "April " if today.month == 4 else "May " if today.month == 5 else \
+        "June " if today.month == 6 else "July " if today.month == 7 else "August " if today.month == \
+        8 else "September " if today.month == 9 else "October " if today.month == 10 else "November " \
+        if today.month == 11 else "December "
+    to_be_printed += str(month) + str(today.year) + "\n"
+    print(to_be_printed)
 
 
 main()
