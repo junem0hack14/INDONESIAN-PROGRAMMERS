@@ -1,2 +1,2 @@
 # INDONESIAN-PROGRAMMERS
-Repository to post applications created by "INDONESIAN PROGRAMMERS" WhatsApp group members. (Sebuah repository untuk post aplikasi-aplikasi buatan para anggota grup WhatsApp "INDONESIAN PROGRAMMERS".)
+Repository to post applications created by "INDONESIAN PROGRAMMERS" WhatsApp group members. Go ahead and join the WhatsApp group "INDONESIAN PROGRAMMERS" via the link https://chat.whatsapp.com/Iuzkb31hOB1LKZbM4gByIb (Sebuah repository untuk post aplikasi-aplikasi buatan para anggota grup WhatsApp "INDONESIAN PROGRAMMERS". Silahkan gabung grup WhatsApp "INDONESIAN PROGRAMMERS" lewat link https://chat.whatsapp.com/Iuzkb31hOB1LKZbM4gByIb)
