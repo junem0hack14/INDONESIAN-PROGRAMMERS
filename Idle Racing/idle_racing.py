@@ -85,8 +85,8 @@ class Player:
 	def move_car(self, seconds):
 		# type: (int) -> bool
 		if self.car is not None:
-			self.distance_travelled += self.car.speed
-			self.car.distance_travelled += self.car.speed
+			self.distance_travelled += self.car.speed * seconds
+			self.car.distance_travelled += self.car.speed * seconds
 			self.coins += self.car.speed * 100 * seconds
 			return True
 		return False
