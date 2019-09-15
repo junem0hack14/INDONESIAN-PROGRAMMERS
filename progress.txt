@@ -1,0 +1,18 @@
+Finished projects (projek-projek yang sudah selesai):
+- Graph Operations
+- Idle Racing
+- JvCalculator
+- Library Tycoon
+- PyCalculator
+- Python List
+- Soccer League Fixture Arrangement
+
+Projects in progress (projek-projek yang sedang dikerjakan):
+- Ebos Own The Planet - Board Game Edition
+- Heroes of Dicury Planet
+- INDONESIAN PROGRAMMERS WEBSITE
+- Legends of Valrarus GUI
+- Legends of Valrarus
+- Liborix Planet Tourism Manager
+- Monster Hunter at Idrarth Planet
+- Monster Hunter at Mithoter Planet
