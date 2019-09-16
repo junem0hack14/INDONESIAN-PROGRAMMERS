@@ -5,8 +5,8 @@ Finished projects (projek-projek yang sudah selesai):
 - Library Tycoon
 - PyCalculator
 - Python List
-- Soccer League Fixture Arrangement
 - Searching App
+- Soccer League Fixture Arrangement
 
 Projects in progress (projek-projek yang sedang dikerjakan):
 - Ebos Own The Planet - Board Game Edition
