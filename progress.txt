@@ -6,6 +6,7 @@ Finished projects (projek-projek yang sudah selesai):
 - PyCalculator
 - Python List
 - Soccer League Fixture Arrangement
+- Searching App
 
 Projects in progress (projek-projek yang sedang dikerjakan):
 - Ebos Own The Planet - Board Game Edition
