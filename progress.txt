@@ -8,6 +8,7 @@ Finished projects (projek-projek yang sudah selesai):
 - PyCalculator
 - Python List
 - Searching App
+- Stack
 - Soccer League Fixture Arrangement
 - Triangle Area Calculator
 
