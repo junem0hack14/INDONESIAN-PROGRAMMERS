@@ -7,6 +7,7 @@ Finished projects (projek-projek yang sudah selesai):
 - Python List
 - Searching App
 - Soccer League Fixture Arrangement
+- Triangle Area Calculator
 
 Projects in progress (projek-projek yang sedang dikerjakan):
 - Ebos Own The Planet - Board Game Edition
