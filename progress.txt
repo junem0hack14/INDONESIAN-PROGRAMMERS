@@ -1,4 +1,5 @@
 Finished projects (projek-projek yang sudah selesai):
+- Draw Square
 - Graph Operations
 - Idle Racing
 - JvCalculator
