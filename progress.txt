@@ -3,6 +3,7 @@ Finished projects (projek-projek yang sudah selesai):
 - Draw Square
 - Graph Operations
 - Idle Racing
+- Java List
 - JvCalculator
 - Library Tycoon
 - PyCalculator
@@ -18,6 +19,6 @@ Projects in progress (projek-projek yang sedang dikerjakan):
 - INDONESIAN PROGRAMMERS WEBSITE
 - Legends of Valrarus GUI
 - Legends of Valrarus
-- Liborix Planet Deck Battlers
+- Liborix Planet Heroes Battle
 - Monster Hunter at Idrarth Planet
 - Monster Hunter at Mithoter Planet
