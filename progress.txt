@@ -5,7 +5,9 @@ Finished projects (projek-projek yang sudah selesai):
 - Idle Racing
 - Java List
 - JvCalculator
+- Letters to Alay Converter
 - Library Tycoon
+- Login App
 - PyCalculator
 - Python List
 - Searching App
