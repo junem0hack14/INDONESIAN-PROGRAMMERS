@@ -83,7 +83,9 @@ def main():
 	
 	while True:
 		turn = 1
+		round = 1
 		while player.curr_hp > 0 and enemy.curr_hp > 0:
+			print("-------------------------ROUND " + str(round) + "---------------------------")
 			if turn % 2 == 1:
 				print("Enter ATTACK to attack.")
 				print("Enter anything else to quit.")
@@ -115,6 +117,8 @@ def main():
 					
 				for i in range(level_ups_enemy):
 					enemy.level_up()
+					
+				round += 1
 	
 	
 main()
