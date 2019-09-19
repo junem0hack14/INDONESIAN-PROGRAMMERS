@@ -3,6 +3,7 @@ Finished projects (projek-projek yang sudah selesai):
 - Draw Square
 - Graph Operations
 - Idle Racing
+- Infinite Battle
 - Java Dictionary
 - Java List
 - JvCalculator
